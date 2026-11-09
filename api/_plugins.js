@@ -3,7 +3,11 @@ const TIMEOUT_MS = 9000;
 const HEADERS = { 'User-Agent': 'AVIN-Assistant/1.0', Accept: 'application/json' };
 
 async function get(url, as = 'json') {
-  const r = await fetch(url, { headers: HEADERS, signal: AbortSignal.timeout(TIMEOUT_MS) });
+  let r = await fetch(url, { headers: HEADERS, signal: AbortSignal.timeout(TIMEOUT_MS) });
+  if (r.status >= 500) {
+    await new Promise((done) => setTimeout(done, 500));
+    r = await fetch(url, { headers: HEADERS, signal: AbortSignal.timeout(TIMEOUT_MS) });
+  }
   if (!r.ok) throw new Error(`Service returned ${r.status}`);
   return as === 'text' ? r.text() : r.json();
 }
@@ -86,8 +90,11 @@ const PLUGINS = {
     return { title: `Translation (${to})`, text: clean(d.responseData.translatedText) };
   } },
   country: { n: 'Countries', i: '🗺️', c: 'Knowledge', d: 'Facts about any country', ask: 'Country name', tool: true, async run(q) {
-    const d = (await get(`https://restcountries.com/v3.1/name/${E(q)}?fields=name,capital,population,currencies,languages,flags,region`))[0];
-    return { title: d.name.official, text: `Capital: ${d.capital?.join(', ')}\nRegion: ${d.region}\nPopulation: ${d.population.toLocaleString('en')}\nLanguages: ${Object.values(d.languages).join(', ')}\nCurrency: ${Object.values(d.currencies).map((c) => c.name).join(', ')}`, image: d.flags?.png };
+    const list = await get(`https://countriesnow.space/api/v0.1/countries/info?returns=name,capital,currency,flag,iso2`);
+    const needle = q.trim().toLowerCase();
+    const d = list.data.find((c) => c.name.toLowerCase() === needle) || list.data.find((c) => c.name.toLowerCase().includes(needle)) || notFound(q);
+    const summary = await get(`https://en.wikipedia.org/api/rest_v1/page/summary/${E(d.name)}`).catch(() => null);
+    return { title: d.name, text: `Capital: ${d.capital}\nCurrency: ${d.currency}${summary?.extract ? `\n\n${summary.extract}` : ''}`, image: summary?.thumbnail?.source, link: summary?.content_urls?.desktop?.page };
   } },
   holidays: { n: 'Public Holidays', i: '🎌', c: 'Knowledge', d: 'Upcoming holidays. Use a 2-letter country code', ask: 'US', tool: true, async run(q) {
     const code = q.trim().toUpperCase().slice(0, 2);
@@ -208,8 +215,8 @@ const PLUGINS = {
     return { title: s.name, text: `Rating: ${s.rating?.average ?? 'n/a'}\nGenres: ${s.genres.join(', ')}\nStatus: ${s.status}\n${clean(s.summary)}`, image: s.image?.medium, link: s.url };
   } },
   anime: { n: 'Anime', i: '🍥', c: 'Entertainment', d: 'Scores and synopsis', ask: 'Anime name', async run(q) {
-    const a = (await get(`https://api.jikan.moe/v4/anime?q=${E(q)}&limit=1&sfw=true`)).data[0] || notFound(q);
-    return { title: a.title, text: `Score: ${a.score ?? 'n/a'}\nEpisodes: ${a.episodes ?? 'n/a'}\n${a.synopsis || ''}`, image: a.images?.jpg?.image_url, link: a.url };
+    const a = (await get(`https://kitsu.io/api/edge/anime?filter[text]=${E(q)}&page[limit]=1`)).data[0]?.attributes || notFound(q);
+    return { title: a.canonicalTitle, text: `Average rating: ${a.averageRating ?? 'n/a'}\nEpisodes: ${a.episodeCount ?? 'n/a'}\n${a.synopsis || ''}`, image: a.posterImage?.medium };
   } },
   music: { n: 'Music Search', i: '🎵', c: 'Entertainment', d: 'Songs and artists', ask: 'Song or artist', async run(q) {
     const d = await get(`https://itunes.apple.com/search?term=${E(q)}&entity=song&limit=5`);
@@ -227,7 +234,7 @@ const PLUGINS = {
   recipes: { n: 'Recipes', i: '🍳', c: 'Food', d: 'Full recipes for any dish', ask: 'Dish', async run(q) {
     const m = (await get(`https://www.themealdb.com/api/json/v1/1/search.php?s=${E(q)}`)).meals?.[0] || notFound(q);
     const items = Array.from({ length: 20 }, (_, i) => m[`strIngredient${i + 1}`] && `${m[`strMeasure${i + 1}`]?.trim()} ${m[`strIngredient${i + 1}`]}`.trim()).filter(Boolean);
-    return { title: m.strMeal, text: `${items.join(', ')}\n\n${m.strInstructions.slice(0, 1200)}`, image: m.strMealThumb, link: m.strSource || m.strYoutube };
+    return { title: m.strMeal, text: `${items.join(', ')}\n\n${m.strInstructions}`, image: m.strMealThumb, link: m.strSource || m.strYoutube };
   } },
   cocktails: { n: 'Mocktails & Cocktails', i: '🍹', c: 'Food', d: 'How to make any drink', ask: 'Drink', async run(q) {
     const m = (await get(`https://www.thecocktaildb.com/api/json/v1/1/search.php?s=${E(q)}`)).drinks?.[0] || notFound(q);
@@ -257,6 +264,14 @@ const PLUGINS = {
   } },
 };
 
+function limit(text, max = 3000) {
+  const t = String(text || '');
+  if (t.length <= max) return t;
+  const cut = t.slice(0, max);
+  const end = Math.max(cut.lastIndexOf('. '), cut.lastIndexOf('.\n'), cut.lastIndexOf('\n'));
+  return `${cut.slice(0, end > max * 0.6 ? end + 1 : max).trim()}…`;
+}
+
 const catalog = () => Object.entries(PLUGINS).map(([id, p]) => ({ id, name: p.n, icon: p.i, cat: p.c, desc: p.d, ask: p.ask || null, optional: !!p.optional, tool: !!p.tool }));
 
 async function runPlugin(id, query) {
@@ -265,7 +280,7 @@ async function runPlugin(id, query) {
   const q = String(query || '').trim().slice(0, 500);
   if (p.ask && !p.optional && !q) throw new Error(`Please enter: ${p.ask}`);
   const out = await p.run(q);
-  return { plugin: p.n, icon: p.i, title: clean(out.title).slice(0, 160), text: String(out.text || '').slice(0, 2400), image: out.image, link: out.link };
+  return { plugin: p.n, icon: p.i, title: clean(out.title).slice(0, 160), text: limit(out.text), image: out.image, link: out.link };
 }
 
 const toolDefs = (enabled) => Object.entries(PLUGINS)
