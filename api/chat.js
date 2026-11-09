@@ -80,6 +80,7 @@ const MAX_HISTORY_ITEMS = 24;
 const MAX_NAME_LENGTH = 40;
 const MAX_MEMORY_LENGTH = 1500;
 const TIMEOUT_MS = 28000;
+const MAX_TOOL_ROUNDS = 3;
 const RATE_LIMIT = 40;
 const RATE_WINDOW_MS = 60000;
 const hits = new Map();
@@ -229,23 +230,30 @@ async function runWithTools(provider, enabled, message) {
   const tools = toolDefs(enabled).filter((t) => TOOL_HINTS[t.function.name]?.test(message));
   if (!tools.length) return null;
   let lastStatus = 0;
+  const finish = async (messages, used, cards) => {
+    const final = await send({ ...provider.body, messages });
+    const text = final?.choices?.[0]?.message?.content?.trim();
+    return text ? { text, used, cards } : null;
+  };
   const send = async (body) => {
     const r = await fetch(provider.url, { method: 'POST', headers: provider.headers, body: JSON.stringify(body), signal: AbortSignal.timeout(TIMEOUT_MS) });
     lastStatus = r.status;
     return r.ok ? r.json() : null;
   };
   try {
-    const ask = { ...provider.body, tools, tool_choice: 'auto' };
-    // The model occasionally writes a malformed tool call, which Groq rejects, so allow one retry.
-    const first = (await send(ask)) || (lastStatus === 400 ? await send(ask) : null);
-    const message = first?.choices?.[0]?.message;
-    if (!message) return null;
-    const calls = (message.tool_calls || []).slice(0, 3);
-    if (!calls.length) return message.content ? { text: message.content.trim(), used: [] } : null;
-
+    // Tools run one at a time: parallel calls are often malformed by this model and rejected by Groq.
     const used = [];
     const cards = [];
-    const results = await Promise.all(calls.map(async (call) => {
+    const messages = [...provider.body.messages];
+    for (let round = 0; round < MAX_TOOL_ROUNDS; round++) {
+      const ask = { ...provider.body, messages, tools, tool_choice: 'auto', parallel_tool_calls: false };
+      // The model occasionally writes a malformed tool call, so allow one retry for that case only.
+      const reply = (await send(ask)) || (lastStatus === 400 ? await send(ask) : null);
+      const message = reply?.choices?.[0]?.message;
+      if (!message) return used.length ? finish(messages, used, cards) : null;
+      const call = message.tool_calls?.[0];
+      if (!call) return message.content ? { text: message.content.trim(), used, cards } : null;
+
       let content;
       try {
         const out = await runPlugin(call.function.name, JSON.parse(call.function.arguments || '{}').query);
@@ -255,15 +263,9 @@ async function runWithTools(provider, enabled, message) {
       } catch (err) {
         content = `Tool failed: ${err.message}`;
       }
-      return { role: 'tool', tool_call_id: call.id, content };
-    }));
-
-    const final = await send({
-      ...provider.body,
-      messages: [...provider.body.messages, { role: 'assistant', content: message.content || '', tool_calls: calls }, ...results],
-    });
-    const text = final?.choices?.[0]?.message?.content?.trim();
-    return text ? { text, used, cards } : null;
+      messages.push({ role: 'assistant', content: message.content || '', tool_calls: [call] }, { role: 'tool', tool_call_id: call.id, content });
+    }
+    return finish(messages, used, cards);
   } catch (err) {
     console.error('Tool flow failed:', err && err.message);
     return null;
