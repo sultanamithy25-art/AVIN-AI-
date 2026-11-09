@@ -337,6 +337,23 @@ body.mode-game .hero,body.mode-game .welcome,body.mode-game .brief{display:none!
 .mem-card.up{transform:rotateY(180deg) scaleX(-1);background:#10303a}.mem-card.won{border-color:#ffd27a;box-shadow:0 0 14px #ffd27a66}
 .ttt{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:9px;width:min(100%,300px)}
 .ttt-cell{aspect-ratio:1;border:1px solid rgba(190,235,226,.3);border-radius:15px;background:rgba(16,42,48,.7);color:#fff;font-size:44px;cursor:pointer}.ttt-cell.won{border-color:#ffd27a;box-shadow:0 0 18px #ffd27a77;color:#ffd27a}
+
+/* Dominoes and Swan Shuffle */
+.gshell{justify-content:flex-start;padding-top:calc(52px + env(safe-area-inset-top));overflow-y:auto}.gbody{width:min(100%,560px)}
+.gsmall{margin:0;font-size:12px;color:#a7c4c3}
+.hand{display:flex;flex-wrap:wrap;justify-content:center;gap:7px;width:100%}
+.domino{display:inline-flex;flex-direction:column;gap:3px;padding:5px;border:1px solid #d7c9a5;border-radius:10px;background:linear-gradient(160deg,#fbf6e7,#e6dcc2);cursor:pointer}
+span.domino{cursor:default}.domino.no{opacity:.4}.domino.ok{box-shadow:0 0 12px #ffd27a88}.domino.mini{flex-direction:row;padding:2px;gap:2px;border-radius:6px}
+.pips{display:grid;grid-template-columns:repeat(3,7px);grid-auto-rows:7px;gap:2px;padding:2px}.pips i{border-radius:50%}.pips i.on{background:#1b2a3a}
+.domino .pips+.pips{border-top:1px solid #b9ab8a;padding-top:4px}
+.domino.mini .pips{grid-template-columns:repeat(3,4px);grid-auto-rows:4px;gap:1px;padding:1px}.domino.mini .pips+.pips{border-top:0;border-left:1px solid #b9ab8a;padding:1px 1px 1px 3px}
+.chain{display:flex;flex-wrap:wrap;justify-content:center;gap:3px;min-height:34px;max-height:30dvh;width:100%;overflow-y:auto;padding:8px;border:1px solid var(--hair);border-radius:14px;background:rgba(5,16,22,.6)}
+.sc{position:relative;display:inline-flex;align-items:center;justify-content:center;flex-direction:column;width:54px;height:78px;border:1px solid rgba(255,255,255,.3);border-radius:11px;color:#fff;font-family:var(--sans);cursor:pointer;transition:transform .15s}
+span.sc{cursor:default}button.sc.ok:hover{transform:translateY(-4px)}.sc small{position:absolute;top:3px;left:5px;font-size:11px}.sc b{font:500 25px var(--serif);line-height:1}.sc em{font-style:normal;font-size:8.5px;margin-top:2px}
+.sc.moon{background:linear-gradient(150deg,#3d4bb0,#1b2257)}.sc.wave{background:linear-gradient(150deg,#1d8a84,#0c3b46)}.sc.feather{background:linear-gradient(150deg,#b48a3c,#5a3e14)}.sc.lotus{background:linear-gradient(150deg,#c0548f,#5b1d4a)}.sc.wild{background:conic-gradient(from 40deg,#3d4bb0,#1d8a84,#b48a3c,#c0548f,#3d4bb0)}
+.sc.no{opacity:.42}.sc.ok{box-shadow:0 0 12px #ffd27a77}.sc.big{transform:scale(1.2);margin:8px}.sc.back{width:17px;height:25px;border-radius:4px;background:linear-gradient(145deg,#1d4f55,#16243f);cursor:default}
+.backs{display:flex;flex-wrap:wrap;justify-content:center;align-items:center;gap:3px}.row.mid{justify-content:center;gap:16px}
+@media(max-width:390px){.hub-grid:not(.small){grid-template-columns:repeat(3,minmax(0,1fr))}}
 </style>
 </head>
 <body><div class="aurora" aria-hidden="true"><i></i><i></i><i></i></div><div class="app">
@@ -356,7 +373,7 @@ document.documentElement.style.setProperty('--swan','url("'+swan.src+'")');
 
 /* Storage */
 const KEY='avin-v2';
-const blank=()=>({chats:[],cur:null,name:'',memory:'',voice:false,sound:false,tasks:[],timer:null,plugins:null,theme:'',ideas:[],xp:0,badges:[],streak:0,lastDay:'',city:'',wx:null,persona:{},counts:{},best:0,bestMem:0,tttWins:0});
+const blank=()=>({chats:[],cur:null,name:'',memory:'',voice:false,sound:false,tasks:[],timer:null,plugins:null,theme:'',ideas:[],xp:0,badges:[],streak:0,lastDay:'',city:'',wx:null,persona:{},counts:{},best:0,bestMem:0,tttWins:0,domWins:0,shuffleWins:0});
 const S=(()=>{try{return Object.assign(blank(),JSON.parse(localStorage.getItem(KEY))||{})}catch{return blank()}})();
 function save(){for(let i=0;i<5;i++){try{localStorage.setItem(KEY,JSON.stringify(S));return}catch{if(S.chats.length<2)return;S.chats.pop()}}}
 const uid=()=>Date.now().toString(36)+Math.random().toString(36).slice(2,6);
@@ -662,7 +679,7 @@ function playGlide(){closeSheet();badge('gamer');const n=el('div','arcade'),cv=d
 let hubEl=null;
 function gameCard(icon,name,sub,fn){const b=btn('hub-game','',fn);b.append(el('span','hub-ico',icon),Object.assign(el('span','hub-txt'),{}));b.lastChild.append(el('b','',name),el('small','',sub));return b}
 function drawHub(){if(!hubEl){hubEl=el('section','hub');$('.top').after(hubEl)}hubEl.innerHTML='';hubEl.append(el('h2','hub-title','Game Mode'),el('p','hub-sub','Level '+levelOf(S.xp)+'  ·  '+rank(levelOf(S.xp))));
-  hubEl.appendChild(el('h4','','Arcade'));const a=el('div','hub-grid');a.append(gameCard('🦢','Swan Glide','Best '+S.best,playGlide),gameCard('🃏','Memory Pairs',S.bestMem?'Best '+S.bestMem+' moves':'Match them all',playMemory),gameCard('⭕','Tic-Tac-Toe','Wins '+S.tttWins,playTicTac));hubEl.appendChild(a);
+  hubEl.appendChild(el('h4','','Arcade'));const a=el('div','hub-grid');a.append(gameCard('🦢','Swan Glide','Best '+S.best,playGlide),gameCard('🃏','Memory Pairs',S.bestMem?'Best '+S.bestMem+' moves':'Match them all',playMemory),gameCard('⭕','Tic-Tac-Toe','Wins '+S.tttWins,playTicTac),gameCard('🀄','Dominoes','Wins '+S.domWins,playDominoes),gameCard('🌌','Swan Shuffle','Wins '+S.shuffleWins,playShuffle));hubEl.appendChild(a);
   hubEl.appendChild(el('h4','','Play with AVIN'));const g=el('div','hub-grid small');GAMES.forEach(x=>g.appendChild(gameCard(x[3],x[0],x[1],()=>reply(x[2]))));hubEl.appendChild(g)}
 function gameShell(title,build){closeSheet();badge('gamer');const n=el('div','arcade gshell'),body=el('div','gbody');n.append(btn('x','✕',()=>{n.remove();drawHub()}),el('h3','',title),body);document.body.appendChild(n);build(body,n)}
 function playMemory(){gameShell('Memory Pairs',body=>{const start=()=>{body.innerHTML='';const set=['🦢','🌙','⭐','🪶','🌊','🌸'],cards=shuffle([...set,...set]);let open=[],moves=0,found=0,lock=false;const info=el('p','ginfo','Moves 0');const grid=el('div','mem');cards.forEach(e=>{const c=btn('mem-card','',()=>{if(lock||c.classList.contains('up'))return;c.classList.add('up');c.textContent=e;open.push(c);tone(620,40);if(open.length<2)return;moves++;info.textContent='Moves '+moves;const [a,b]=open;open=[];if(a.textContent===b.textContent){found++;a.classList.add('won');b.classList.add('won');tone(880,70);if(found===set.length){award('game',20);const best=!S.bestMem||moves<S.bestMem;if(best){S.bestMem=moves;save()}info.textContent='Cleared in '+moves+' moves'+(best?'. New best!':'');burst(['🃏','✨','🦢'],18);body.appendChild(btn('btn gold','Play again',start))}}else{lock=true;setTimeout(()=>{[a,b].forEach(x=>{x.classList.remove('up');x.textContent=''});lock=false},700)}});c.setAttribute('aria-label','Card');grid.appendChild(c)});body.append(info,grid)};start()})}
@@ -673,5 +690,35 @@ function playTicTac(){gameShell('Tic-Tac-Toe',body=>{const L=[[0,1,2],[3,4,5],[6
     const paint=()=>cells.forEach((c,i)=>c.textContent=b[i]);
     const end=(t,line,pts)=>{over=true;info.textContent=t;(line||[]).forEach(i=>cells[i].classList.add('won'));if(pts)award('game',pts);body.appendChild(btn('btn gold','Play again',start))};
     function play(i){if(over||b[i])return;b[i]='✕';paint();tone(620,50);let w=win(b,'✕');if(w){S.tttWins++;save();burst(['⭕','✨','🏆'],18);return end('You beat AVIN!',w,20)}if(!empty(b).length)return end('A draw. Respect.',null,5);over=true;info.textContent='AVIN is thinking...';setTimeout(()=>{over=false;b[pick(b)]='◯';paint();tone(420,50);w=win(b,'◯');if(w)return end('AVIN wins this one.',w,2);if(!empty(b).length)return end('A draw. Respect.',null,5);info.textContent='Your move'},420)}};start()})}
+/* Dominoes */
+const PIPS={0:[],1:[4],2:[0,8],3:[0,4,8],4:[0,2,6,8],5:[0,2,4,6,8],6:[0,2,3,5,6,8]};
+function pipFace(n){const f=el('span','pips');for(let i=0;i<9;i++){const d=el('i');if(PIPS[n].includes(i))d.className='on';f.appendChild(d)}return f}
+function dominoEl(t,cls,fn){const d=fn?btn('domino '+(cls||''),'',fn):el('span','domino '+(cls||''));d.append(pipFace(t[0]),pipFace(t[1]));d.setAttribute('aria-label',t[0]+' and '+t[1]);return d}
+function playDominoes(){gameShell('Dominoes',body=>{const start=()=>{let all=[];for(let a=0;a<=6;a++)for(let b=a;b<=6;b++)all.push([a,b]);all=shuffle(all);const you=all.splice(0,7),ai=all.splice(0,7),bone=all,chain=[];let over=false,lock=false,passes=0,choice=null,msg='';
+    const pts=h=>h.reduce((s,t)=>s+t[0]+t[1],0);const L=()=>chain[0][0],R=()=>chain[chain.length-1][1];
+    const sides=t=>!chain.length?['R']:[...(t.includes(L())?['L']:[]),...(t.includes(R())?['R']:[])];
+    const place=(t,side)=>{if(!chain.length)return chain.push(t);if(side==='L')chain.unshift(t[1]===L()?t:[t[1],t[0]]);else chain.push(t[0]===R()?t:[t[1],t[0]])};
+    const finish=(t,pointsWon,won)=>{over=true;msg=t;if(won){S.domWins++;save();burst(['🁣','✨','🏆'],16)}award('game',pointsWon);draw_()};
+    const checkBlock=()=>{if(passes<2)return false;const a=pts(you),b=pts(ai);finish('Blocked. You '+a+' pips, AVIN '+b+'. '+(a<b?'You win!':a>b?'AVIN wins.':'A tie.'),a<b?20:5,a<b);return true};
+    function aiTurn(){lock=true;msg='AVIN is thinking...';draw_();setTimeout(()=>{if(over)return;let m=ai.filter(t=>sides(t).length).sort((a,b)=>b[0]+b[1]-a[0]-a[1])[0];while(!m&&bone.length){ai.push(bone.pop());m=ai.filter(t=>sides(t).length)[0]}lock=false;if(m){ai.splice(ai.indexOf(m),1);place(m,sides(m)[0]);passes=0;tone(420,50);if(!ai.length)return finish('AVIN went out first.',3,false);msg='Your move'}else{passes++;if(checkBlock())return;msg='AVIN passed. Your move'}draw_()},600)}
+    function yours(t,side){you.splice(you.indexOf(t),1);place(t,side);passes=0;choice=null;tone(620,50);if(!you.length)return finish('You went out first!',20,true);aiTurn()}
+    function tap(t){if(over||lock)return;const s=sides(t);if(!s.length)return toast('That tile doesn’t fit either end');if(s.length===2&&L()!==R()&&t[0]!==t[1]){choice=t;return draw_()}yours(t,s[0])}
+    function draw_(){body.innerHTML='';body.appendChild(el('p','ginfo',msg));body.appendChild(el('p','gsmall','AVIN '+ai.length+' tiles  ·  '+bone.length+' left to draw'));const c=el('div','chain');chain.forEach(t=>c.appendChild(dominoEl(t,'mini')));body.appendChild(c);if(choice){const r=el('div','row');r.append(btn('btn gold','Left end',()=>yours(choice,'L')),btn('btn gold','Right end',()=>yours(choice,'R')),btn('btn','Cancel',()=>{choice=null;draw_()}));body.appendChild(r)}const h=el('div','hand');you.forEach(t=>h.appendChild(dominoEl(t,sides(t).length?'ok':'no',()=>tap(t))));body.appendChild(h);
+      if(over)body.appendChild(btn('btn gold','Play again',start));else if(!lock&&!you.some(t=>sides(t).length))body.appendChild(btn('btn gold',bone.length?'Draw a tile':'Pass',()=>{if(bone.length){you.push(bone.pop());tone(520,40);draw_()}else{passes++;if(!checkBlock())aiTurn()}}))}
+    const dbl=h=>h.filter(t=>t[0]===t[1]).sort((a,b)=>b[0]-a[0])[0];const yd=dbl(you),ad=dbl(ai);if(ad&&(!yd||ad[0]>yd[0])){ai.splice(ai.indexOf(ad),1);chain.push(ad);msg='AVIN opened with its highest double. Your move';draw_()}else{msg=yd?'You hold the highest double. Tap any tile to start':'Tap any tile to start';draw_()}};start()})}
+
+/* Swan Shuffle: an original match-and-shed card game */
+const SUITS={moon:'🌙',wave:'🌊',feather:'🪶',lotus:'🌸'};const SPECIAL={ripple:['🌀','Ripple'],storm:['⛈️','Storm'],aurora:['🌌','Aurora']};
+function shuffleCard(c,cls,fn){const n=fn?btn('sc '+(c.s||'wild')+' '+(cls||''),'',fn):el('span','sc '+(c.s||'wild')+' '+(cls||''));n.append(el('small','',c.s?SUITS[c.s]:'✦'),el('b','',c.k==='n'?c.v:SPECIAL[c.k][0]),el('em','',c.k==='n'?'':SPECIAL[c.k][1]));return n}
+function playShuffle(){gameShell('Swan Shuffle',body=>{const start=()=>{let deck=[];Object.keys(SUITS).forEach(s=>{for(let v=1;v<=7;v++)deck.push({k:'n',s,v},{k:'n',s,v});deck.push({k:'ripple',s},{k:'storm',s})});for(let i=0;i<4;i++)deck.push({k:'aurora'});deck=shuffle(deck);const you=deck.splice(0,7),ai=deck.splice(0,7);let i=deck.findIndex(c=>c.k==='n');let top=deck.splice(i,1)[0],suit=top.s,pile=[],over=false,lock=false,drew=false,picking=null,msg='Match the suit or number. Your move';
+    const can=c=>c.k==='aurora'||c.s===suit||(c.k==='n'&&top.k==='n'&&c.v===top.v)||(c.k!=='n'&&c.k===top.k);
+    const take=(h,n)=>{for(let x=0;x<n;x++){if(!deck.length){deck=shuffle(pile);pile=[]}if(deck.length)h.push(deck.pop())}};
+    const lay=(h,c,chosen)=>{h.splice(h.indexOf(c),1);pile.push(top);top=c;suit=c.k==='aurora'?chosen:c.s};
+    const end=(t,won)=>{over=true;msg=t;if(won){S.shuffleWins++;save();burst(['🦢','✨','🏆'],18)}award('game',won?20:3);draw_()};
+    function after(c,h,other,who){if(!h.length)return end(who==='you'?'You emptied your hand!':'AVIN emptied its hand.',who==='you');if(c.k==='storm')take(other,2);const again=c.k==='storm'||c.k==='ripple';if(who==='you'){drew=false;if(again){msg=(c.k==='storm'?'Storm! AVIN draws 2 and skips. ':'Ripple! AVIN skips. ')+'Go again';draw_()}else aiTurn()}else if(again){msg=(c.k==='storm'?'Storm! You draw 2 and skip.':'Ripple! You skip.');draw_();aiTurn()}else{msg='Your move';lock=false;draw_()}}
+    function aiTurn(){lock=true;if(!over){if(!/skip/.test(msg))msg='AVIN is thinking...';draw_()}setTimeout(()=>{if(over)return;let m=ai.filter(can).sort((a,b)=>(a.k==='aurora')-(b.k==='aurora')||(b.k!=='n')-(a.k!=='n'))[0];if(!m){take(ai,1);const d=ai[ai.length-1];if(!d||!can(d)){msg='AVIN drew a card. Your move';lock=false;return draw_()}m=d}const count={};ai.forEach(c=>{if(c.s)count[c.s]=(count[c.s]||0)+1});const pick=Object.keys(SUITS).sort((a,b)=>(count[b]||0)-(count[a]||0))[0];lay(ai,m,pick);tone(420,50);after(m,ai,you,'ai')},700)}
+    function tap(c){if(over||lock)return;if(!can(c))return toast('Match the suit or number');if(c.k==='aurora'){picking=c;return draw_()}lay(you,c);tone(620,50);after(c,you,ai,'you')}
+    function draw_(){body.innerHTML='';body.appendChild(el('p','ginfo',msg));const opp=el('div','backs');ai.slice(0,12).forEach(()=>opp.appendChild(el('span','sc back')));opp.appendChild(el('span','gsmall','AVIN: '+ai.length));body.appendChild(opp);const mid=el('div','row mid');mid.appendChild(shuffleCard(top,'big'));mid.appendChild(el('span','gsmall','Suit now: '+SUITS[suit]));body.appendChild(mid);if(picking){const r=el('div','row');Object.entries(SUITS).forEach(([s,i])=>r.appendChild(btn('btn',i,()=>{const c=picking;picking=null;lay(you,c,s);tone(620,50);after(c,you,ai,'you')})));body.append(el('p','gsmall','Aurora: choose the next suit'),r)}const h=el('div','hand');you.forEach(c=>h.appendChild(shuffleCard(c,can(c)?'ok':'no',()=>tap(c))));body.appendChild(h);
+      if(over)body.appendChild(btn('btn gold','Play again',start));else if(!lock&&!picking)body.appendChild(btn('btn gold',drew?'Pass':'Draw a card',()=>{if(drew){drew=false;return aiTurn()}take(you,1);tone(520,40);const d=you[you.length-1];if(can(d)){drew=true;msg='You can play that card, or pass';draw_()}else aiTurn()}))}draw_()};start()})}
 setMode(mode);showChat();tick();
 </script></body></html>
