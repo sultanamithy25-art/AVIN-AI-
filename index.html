@@ -470,6 +470,8 @@ function settingsBody(s){s.appendChild(el('h4','','Weather city'));const c=el('i
 function youSheet(){openSheet('Your AVIN',s=>tabs(s,[['You',youBody],['Chats',chatsBody],['Settings',settingsBody]]))}
 
 
+function more(s,label){const d=el('details','more');d.appendChild(el('summary','',label||'More options'));s.appendChild(d);return d}
+function tabs(s,list){const bar=el('div','tabs'),body=el('div');const show=i=>{[...bar.children].forEach((b,n)=>b.classList.toggle('on',n===i));body.innerHTML='';list[i][1](body)};list.forEach(([n],i)=>bar.appendChild(btn('tab',n,()=>show(i))));s.append(bar,body);show(0)}
 /* Wiring */
 $('#profileBtn').onclick=youSheet;$('#newChat').onclick=()=>{newChat();openChat()};
 const OPEN={chat:()=>{if(cur().msgs.length)showChat();openChat();input.focus()}};

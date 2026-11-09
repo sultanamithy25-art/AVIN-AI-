@@ -81,6 +81,7 @@ const MAX_NAME_LENGTH = 40;
 const MAX_MEMORY_LENGTH = 1500;
 const TIMEOUT_MS = 28000;
 const MAX_TOOL_ROUNDS = 3;
+const MUST_LOOK_UP = /where (can|do|to)\b.*\b(watch|stream|see)\b|tell me about the (movie|film)/i;
 const RATE_LIMIT = 40;
 const RATE_WINDOW_MS = 60000;
 const hits = new Map();
@@ -227,6 +228,7 @@ async function callProvider(provider) {
 
 // Lets the model call live plugins. Any failure returns null so the normal reply path still runs.
 async function runWithTools(provider, enabled, message) {
+  const lookup = message;
   const tools = toolDefs(enabled).filter((t) => TOOL_HINTS[t.function.name]?.test(message));
   if (!tools.length) return null;
   let lastStatus = 0;
@@ -246,7 +248,7 @@ async function runWithTools(provider, enabled, message) {
     const cards = [];
     const messages = [...provider.body.messages];
     for (let round = 0; round < MAX_TOOL_ROUNDS; round++) {
-      const ask = { ...provider.body, messages, tools, tool_choice: 'auto', parallel_tool_calls: false };
+      const ask = { ...provider.body, messages, tools, tool_choice: round === 0 && MUST_LOOK_UP.test(lookup) ? 'required' : 'auto', parallel_tool_calls: false };
       // The model occasionally writes a malformed tool call, so allow one retry for that case only.
       const reply = (await send(ask)) || (lastStatus === 400 ? await send(ask) : null);
       const message = reply?.choices?.[0]?.message;
