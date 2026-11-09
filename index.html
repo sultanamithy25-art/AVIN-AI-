@@ -46,7 +46,23 @@ h1{text-shadow:0 0 20px #8ec5ff55}.tagline{color:#b9e9df}.always{color:#d9d0ff}
 </main></div>
 <script>
 const log=document.getElementById('chatlog'), input=document.getElementById('message');
-function reply(text){const u=document.createElement('div');u.className='message user';u.textContent=text;log.appendChild(u);const b=document.createElement('div');b.className='message bot';b.textContent='I’m here with you ✨ This is the AVIN design preview. When an AI service is connected, I’ll be able to answer your message for real.';log.appendChild(b);input.value='';log.scrollIntoView({behavior:'smooth',block:'nearest'});}
+async function reply(text){
+  const history=reply.history||(reply.history=[]);
+  const u=document.createElement('div');u.className='message user';u.textContent=text;log.appendChild(u);
+  const b=document.createElement('div');b.className='message bot';b.textContent='Thinking...';log.appendChild(b);
+  input.value='';log.scrollIntoView({behavior:'smooth',block:'nearest'});
+  try{
+    const res=await fetch('/api/chat',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({message:text,history})});
+    const data=await res.json();
+    if(!res.ok||!data.reply)throw new Error(data.error||'No reply');
+    b.textContent=data.reply;
+    history.push({role:'user',text},{role:'model',text:data.reply});
+  }catch(err){
+    console.error('AVIN chat error:',err);
+    b.textContent='Sorry, I couldn’t reply just now. Please try again in a moment.';
+  }
+  log.scrollIntoView({behavior:'smooth',block:'nearest'});
+}
 document.getElementById('chatform').addEventListener('submit',e=>{e.preventDefault();const t=input.value.trim();if(t)reply(t)});
 document.querySelectorAll('[data-prompt]').forEach(b=>b.addEventListener('click',()=>{input.value=b.dataset.prompt;input.focus()}));
 document.querySelectorAll('.nav button').forEach(b=>b.addEventListener('click',()=>{document.querySelectorAll('.nav button').forEach(x=>x.classList.remove('active'));b.classList.add('active');if(b.dataset.mode==='Chat')input.focus();else if(b.dataset.mode!=='Home'){input.value='Help me explore '+b.dataset.mode.toLowerCase();input.focus()}}));
