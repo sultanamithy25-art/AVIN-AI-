@@ -2,11 +2,12 @@ const E = encodeURIComponent;
 const TIMEOUT_MS = 9000;
 const HEADERS = { 'User-Agent': 'AVIN-Assistant/1.0', Accept: 'application/json' };
 
-async function get(url, as = 'json') {
-  let r = await fetch(url, { headers: HEADERS, signal: AbortSignal.timeout(TIMEOUT_MS) });
+async function get(url, as = 'json', extra = {}) {
+  const headers = { ...HEADERS, ...extra };
+  let r = await fetch(url, { headers, signal: AbortSignal.timeout(TIMEOUT_MS) });
   if (r.status >= 500) {
     await new Promise((done) => setTimeout(done, 500));
-    r = await fetch(url, { headers: HEADERS, signal: AbortSignal.timeout(TIMEOUT_MS) });
+    r = await fetch(url, { headers, signal: AbortSignal.timeout(TIMEOUT_MS) });
   }
   if (!r.ok) throw new Error(`Service returned ${r.status}`);
   return as === 'text' ? r.text() : r.json();
@@ -215,7 +216,7 @@ const PLUGINS = {
     return { title: s.name, text: `Rating: ${s.rating?.average ?? 'n/a'}\nGenres: ${s.genres.join(', ')}\nStatus: ${s.status}\n${clean(s.summary)}`, image: s.image?.medium, link: s.url };
   } },
   anime: { n: 'Anime', i: '🍥', c: 'Entertainment', d: 'Scores and synopsis', ask: 'Anime name', async run(q) {
-    const a = (await get(`https://kitsu.io/api/edge/anime?filter[text]=${E(q)}&page[limit]=1`)).data[0]?.attributes || notFound(q);
+    const a = (await get(`https://kitsu.io/api/edge/anime?filter[text]=${E(q)}&page[limit]=1`, 'json', { Accept: 'application/vnd.api+json' })).data[0]?.attributes || notFound(q);
     return { title: a.canonicalTitle, text: `Average rating: ${a.averageRating ?? 'n/a'}\nEpisodes: ${a.episodeCount ?? 'n/a'}\n${a.synopsis || ''}`, image: a.posterImage?.medium };
   } },
   music: { n: 'Music Search', i: '🎵', c: 'Entertainment', d: 'Songs and artists', ask: 'Song or artist', async run(q) {

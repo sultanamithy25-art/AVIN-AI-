@@ -328,7 +328,7 @@ function newChat(){if(cur().msgs.length){S.cur=null;cur();save()}log.innerHTML='
 
 function setBusy(on){reply.busy=on;const s=$('.send');s.classList.toggle('stop',on);s.innerHTML=on?ICON.stop:ICON.send;s.setAttribute('aria-label',on?'Stop':'Send message')}
 function reveal(el_,text,stop){if(still){el_.textContent=text;return Promise.resolve()}const w=text.split(/(\s+)/);let i=0;el_.textContent='';return new Promise(done=>{const t=setInterval(()=>{i+=2;el_.textContent=w.slice(0,i).join('');toEnd();if(i>=w.length||stop.aborted){clearInterval(t);done()}},22)})}
-function historyFor(msgs){return msgs.filter(m=>m.r==='u'||m.r==='b').slice(-24).map(m=>({role:m.r==='u'?'user':'model',text:m.t}))}
+function historyFor(msgs){return msgs.filter((m,i)=>m.r==='b'||(m.r==='u'&&msgs[i+1]?.r==='b')).slice(-24).map(m=>({role:m.r==='u'?'user':'model',text:m.t}))}
 function thinking(){const b=el('div','message bot thinking');const x=el('div','msg-body','Thinking...');b.appendChild(x);log.appendChild(b);toEnd();return{b,x}}
 function failBubble(view,err,again){view.b.classList.remove('thinking');view.x.textContent=err==='stopped'?'Stopped.':'Sorry, I couldn’t reply just now. Please try again in a moment.';if(err!=='stopped'){const r=el('div','msg-actions');r.appendChild(btn('primary','Try again',()=>{view.b.remove();again()}));view.b.appendChild(r)}}
 async function reply(text,opts){if(reply.busy)return;setBusy(true);const c=cur(),quiet=opts&&opts.quiet;
@@ -450,7 +450,7 @@ const INSPIRE=['A library floating among the clouds at golden hour','A tiny drag
 function imagesSheet(){openSheet('Image studio',s=>{let quality='fast',ratio='square',style='';
   const t=el('textarea','field');t.rows=3;t.placeholder='Describe anything you can imagine...';s.appendChild(t);
   const add=(label,list,val,on)=>{s.appendChild(el('div','opt-label',label));const w=el('div','tags-scroll');pickTag(w,list,val,on);s.appendChild(w)};
-  add('Quality',[['fast','Fast'],['hd','HD (slower)']],quality,v=>quality=v);add('Shape',[['square','Square'],['portrait','Portrait'],['landscape','Landscape']],ratio,v=>ratio=v);add('Style',Object.entries(STYLES),style,v=>style=v);
+  add('Quality',[['fast','Fast'],['hd','High detail']],quality,v=>quality=v);add('Shape',[['square','Square'],['portrait','Portrait'],['landscape','Landscape']],ratio,v=>ratio=v);add('Style',Object.entries(STYLES),style,v=>style=v);
   const en=el('label','switch');const chk=el('input');chk.type='checkbox';chk.checked=true;en.append(el('span','','Let AVIN improve my prompt'),chk);s.appendChild(en);
   const read=()=>{const v=t.value.trim();if(!v){t.focus();toast('Describe your picture first');return''}return v+(STYLE_TEXT[style]?', '+STYLE_TEXT[style]:'')};
   const r=el('div','row');r.append(btn('btn gold','Generate',()=>{const v=read();if(v){closeSheet();genImage({prompt:v,quality,ratio,enhance:chk.checked})}}),btn('btn','Inspire me',()=>{t.value=shuffle(INSPIRE)[0]}),btn('btn','Gallery',gallerySheet));s.appendChild(r);

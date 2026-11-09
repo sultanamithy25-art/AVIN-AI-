@@ -3,7 +3,7 @@ const headers = () => ({ apikey: process.env.HORDE_API_KEY || '0000000000', 'Cli
 
 const QUALITY = {
   fast: { models: ['Deliberate', 'stable_diffusion'], steps: 26, sizes: { square: [512, 512], portrait: [512, 768], landscape: [768, 512] } },
-  hd: { models: ['Juggernaut XL', 'AlbedoBase XL (SDXL)'], steps: 30, sizes: { square: [1024, 1024], portrait: [832, 1216], landscape: [1216, 832] } },
+  hd: { models: ['Deliberate', 'stable_diffusion'], steps: 34, sizes: { square: [768, 768], portrait: [640, 960], landscape: [960, 640] } },
 };
 const NEGATIVE = 'lowres, blurry, deformed, bad anatomy, extra limbs, watermark, text, signature, nsfw, nude';
 const LIMIT = 12;
