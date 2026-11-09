@@ -282,6 +282,13 @@ body.chatting .brief{display:none}
 .card.on{border-color:var(--champagne);background:rgba(236,220,184,.14)}
 .arcade{padding:0;gap:0}.arcade canvas{display:block;width:100%;height:100%;touch-action:none;cursor:pointer}
 .sounds .tag{font-size:12px}
+
+/* Media plugins */
+.player{display:block;width:100%;aspect-ratio:16/9;margin:9px 0 3px;border:0;border-radius:12px;background:#000}.player.spot{aspect-ratio:auto;height:152px}
+.plugin-card audio{display:block;width:100%;height:38px;margin:9px 0 3px}
+.app-links{display:flex;flex-wrap:wrap;gap:6px;margin-top:10px}
+.app-links a{padding:6px 11px;border:1px solid rgba(190,235,226,.3);border-radius:14px;color:#e6f7f3;background:rgba(23,58,60,.55);font-size:12.5px;text-decoration:none}
+.app-links a:hover{border-color:var(--champagne)}
 </style>
 </head>
 <body><div class="aurora" aria-hidden="true"><i></i><i></i><i></i></div><div class="app">
@@ -350,7 +357,7 @@ function drawMsg(m,isLast){let n;
   if(m.r==='u'){n=el('div','message user',m.d||m.t);log.appendChild(n);return n}
   n=el('div','message bot');
   if(m.r==='img')return drawImage(m);if(m.r==='p')return drawPlugin(m);if(m.r==='art'){const i=el('img','art');i.alt=m.t;i.dataset.svg='1';i.onload=toEnd;i.src='data:image/svg+xml;charset=utf-8,'+encodeURIComponent(m.svg);n.appendChild(i);actions(m,n);log.appendChild(n);return n}
-  const b=el('div','msg-body');b.innerHTML=render(m.t);n.appendChild(b);actions(m,n,isLast);log.appendChild(n);return n}
+  const b=el('div','msg-body');b.innerHTML=render(m.t);n.appendChild(b);actions(m,n,isLast);log.appendChild(n);(m.cards||[]).forEach(d=>drawPlugin(pluginMsg(d)));return n}
 function showChat(){log.innerHTML='';const msgs=cur().msgs;let last=-1;msgs.forEach((m,i)=>{if(m.r==='b')last=i});msgs.forEach((m,i)=>drawMsg(m,i===last));if(msgs[msgs.length-1]?.r==='b')drawChips(msgs[msgs.length-1].chips);toEnd()}
 function newChat(){if(cur().msgs.length){S.cur=null;cur();save()}log.innerHTML='';speechSynthesis?.cancel?.();input.focus()}
 
@@ -369,11 +376,11 @@ async function reply(text,opts){if(reply.busy)return;setBusy(true);const c=cur()
     const res=await fetch('/api/chat',{method:'POST',headers:{'Content-Type':'application/json'},signal,body:JSON.stringify({message:text,history,mode,name:S.name,memory:S.memory,plugins:enabledTools(),persona:persona(),image:opts&&opts.image})});
     const data=await res.json();
     if(!res.ok||!data.reply)throw new Error(data.error||'No reply');
-    const m={r:'b',t:data.reply,chips:data.chips||[],used:data.used||[]};
+    const m={r:'b',t:data.reply,chips:data.chips||[],used:data.used||[],cards:data.cards||[]};
     c.msgs.push(m);save();
     view.b.classList.remove('thinking');tone(980,80);
     await reveal(view.x,plain(m.t),signal);
-    view.x.innerHTML=render(m.t);actions(m,view.b,true);drawChips(m.chips);
+    view.x.innerHTML=render(m.t);actions(m,view.b,true);m.cards.forEach(d=>drawPlugin(pluginMsg(d)));drawChips(m.chips);
     if(mode==='fun'&&/\b(congrat|birthday|you win|winner|champion|nailed it)/i.test(m.t+' '+text))burst(['🎉','✨','🦢','🥳']);
     if(S.voice&&!talk.on)speak(m.t);award('msg');if(opts&&opts.image)badge('vision');talk.after(m.t);
   }catch(err){
@@ -505,14 +512,22 @@ function ideasSheet(){openSheet('Idea Lab',s=>{let type='Business',busy=false;
 function vaultSheet(){openSheet('Idea vault',s=>{if(!S.ideas.length)return s.appendChild(el('p','','Saved ideas will live here.'));S.ideas.forEach(x=>s.appendChild(ideaCard(x,{saved:true})))})}
 
 /* Plugins */
-const DEFAULT_PLUGINS=['weather','air','time','wikipedia','define','translate','country','holidays','currency','crypto','hackernews','quakes','recipes','qr','joke','music'];
+const MEDIA_PLUGINS=['youtube','spotify','musichub','watch','movies','podcasts','livestreams'];
+const DEFAULT_PLUGINS=[...MEDIA_PLUGINS,'weather','air','time','wikipedia','define','translate','country','holidays','currency','crypto','hackernews','quakes','recipes','qr','joke','music'];
 if(!Array.isArray(S.plugins))S.plugins=DEFAULT_PLUGINS.slice();
+if(!S.mediaAdded){S.plugins=[...new Set([...S.plugins,...MEDIA_PLUGINS,'music'])];S.mediaAdded=true;save()}
+const pluginMsg=d=>({r:'p',name:d.plugin,icon:d.icon,title:d.title,t:d.text,image:d.image,link:d.link,links:d.links,audio:d.audio,video:d.video,embed:d.embed});
+const httpsOnly=u=>/^https:\/\//.test(u||'');
+function mediaFor(m,n){if(/^https:\/\/(www\.youtube-nocookie\.com\/embed\/[\w-]{11}|open\.spotify\.com\/embed\/[a-z]+\/\w+)$/.test(m.embed||'')){const f=el('iframe','player'+(m.embed.includes('spotify')?' spot':''));f.src=m.embed;f.title=m.title;f.loading='lazy';f.allow='autoplay; encrypted-media; picture-in-picture; clipboard-write';f.allowFullscreen=true;f.referrerPolicy='strict-origin-when-cross-origin';f.setAttribute('sandbox','allow-scripts allow-same-origin allow-popups allow-presentation');f.onload=toEnd;n.appendChild(f)}
+  if(httpsOnly(m.audio)){const a=el('audio');a.controls=true;a.preload='none';a.src=m.audio;n.appendChild(a)}
+  if(httpsOnly(m.video)){const v=el('video','player');v.controls=true;v.preload='none';v.playsInline=true;v.poster=m.image||'';v.src=m.video;n.appendChild(v)}
+  if(Array.isArray(m.links)&&m.links.length){const w=el('div','app-links');m.links.filter(l=>httpsOnly(l.url)).forEach(l=>{const a=el('a','',l.label);a.href=l.url;a.target='_blank';a.rel='noopener noreferrer';w.appendChild(a)});n.appendChild(w)}}
 let CATALOG=[];const loadCatalog=()=>fetch('/api/plugin').then(r=>r.json()).then(d=>{CATALOG=d.plugins||[];return CATALOG}).catch(()=>[]);loadCatalog();
 const enabledTools=()=>S.plugins.filter(id=>CATALOG.length?CATALOG.some(p=>p.id===id&&p.tool):true);
 function pluginBanner(s){const b=btn('plugin-banner','',pluginsSheet);const d=el('div');d.append(el('b','','Plugin store'),el('small','',(CATALOG.length||'50+')+' free live tools. Install, use, or let AVIN use them.'));b.append(d,el('span','','→'));s.appendChild(b)}
-function drawPlugin(m){const n=el('div','message bot plugin-card');const h=el('div','plug-head',m.icon+' '+m.name);n.appendChild(h);if(/^https:/.test(m.image||'')){const i=el('img');i.referrerPolicy='no-referrer';i.alt=m.title;i.onload=toEnd;i.src=m.image;i.onclick=()=>lightbox(m.image);i.style.cursor='zoom-in';n.appendChild(i)}n.append(el('h5','',m.title),el('div','msg-body',m.t));const r=el('div','msg-actions');r.append(btn('primary','Ask AVIN',()=>reply('Using this result from '+m.name+', tell me what matters and what I should do with it.\n\n'+m.title+'\n'+m.t,{display:'Tell me more about: '+m.title})),btn('','Copy',()=>copy(m.title+'\n'+m.t)));if(/^https:/.test(m.link||'')){const a=el('a');a.href=m.link;a.target='_blank';a.rel='noopener noreferrer';a.appendChild(el('button','','Open'));r.appendChild(a)}n.appendChild(r);log.appendChild(n);return n}
+function drawPlugin(m){const n=el('div','message bot plugin-card');const h=el('div','plug-head',m.icon+' '+m.name);n.appendChild(h);if(/^https:/.test(m.image||'')){const i=el('img');i.referrerPolicy='no-referrer';i.alt=m.title;i.onload=toEnd;i.src=m.image;i.onclick=()=>lightbox(m.image);i.style.cursor='zoom-in';n.appendChild(i)}n.append(el('h5','',m.title),el('div','msg-body',m.t));mediaFor(m,n);const r=el('div','msg-actions');r.append(btn('primary','Ask AVIN',()=>reply('Using this result from '+m.name+', tell me what matters and what I should do with it.\n\n'+m.title+'\n'+m.t,{display:'Tell me more about: '+m.title})),btn('','Copy',()=>copy(m.title+'\n'+m.t)));if(/^https:/.test(m.link||'')){const a=el('a');a.href=m.link;a.target='_blank';a.rel='noopener noreferrer';a.appendChild(el('button','','Open'));r.appendChild(a)}n.appendChild(r);log.appendChild(n);return n}
 async function usePlugin(p,q){if(reply.busy)return;setBusy(true);const c=cur();openChat();clearChips();const t=p.icon+' '+p.name+(q?': '+q:'');c.msgs.push({r:'u',t});drawMsg({r:'u',t});if(c.title==='New chat')c.title=t.slice(0,42);save();const view=thinking();reply.ctl=new AbortController();
-  try{const r=await fetch('/api/plugin',{method:'POST',headers:{'Content-Type':'application/json'},signal:reply.ctl.signal,body:JSON.stringify({id:p.id,query:q})});const d=await r.json();if(!r.ok)throw new Error(d.error);award('plugin',3);view.b.remove();const m={r:'p',name:d.plugin,icon:d.icon,title:d.title,t:d.text,image:d.image,link:d.link};c.msgs.push(m);save();drawMsg(m);tone(980,80)}
+  try{const r=await fetch('/api/plugin',{method:'POST',headers:{'Content-Type':'application/json'},signal:reply.ctl.signal,body:JSON.stringify({id:p.id,query:q})});const d=await r.json();if(!r.ok)throw new Error(d.error);award('plugin',3);view.b.remove();const m=pluginMsg(d);c.msgs.push(m);save();drawMsg(m);tone(980,80)}
   catch(e){view.b.classList.remove('thinking');view.x.textContent=e.name==='AbortError'?'Stopped.':(e.message||'That plugin is not responding right now.')}toEnd();setBusy(false)}
 function pluginsSheet(){openSheet('Plugin store',async s=>{let cat='Installed',q='';const list=el('div');const find=el('input','field');find.placeholder='Search plugins';find.oninput=()=>{q=find.value.toLowerCase();draw_()};s.appendChild(find);const w=el('div','tags-scroll');s.append(w,list);list.appendChild(el('p','','Opening the store...'));const cats=await (CATALOG.length?Promise.resolve(CATALOG):loadCatalog());if(!cats.length){list.innerHTML='';return list.appendChild(el('p','','The store is not reachable right now.'))}
   pickTag(w,['Installed','All',...new Set(CATALOG.map(p=>p.cat))].map(x=>[x,x]),cat,v=>{cat=v;draw_()});

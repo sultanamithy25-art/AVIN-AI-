@@ -22,6 +22,12 @@ async function place(q) {
   return d.results?.[0] || notFound(q);
 }
 
+const links = (q, list) => list.map(([label, url]) => ({ label, url: url + E(q) }));
+const MUSIC_APPS = [['Spotify', 'https://open.spotify.com/search/'], ['YouTube Music', 'https://music.youtube.com/search?q='], ['Apple Music', 'https://music.apple.com/search?term='], ['SoundCloud', 'https://soundcloud.com/search?q='], ['Deezer', 'https://www.deezer.com/search/'], ['Amazon Music', 'https://music.amazon.com/search/'], ['JioSaavn', 'https://www.jiosaavn.com/search/song/'], ['Gaana', 'https://gaana.com/search/'], ['Tidal', 'https://listen.tidal.com/search?q=']];
+const WATCH_APPS = [['JustWatch', 'https://www.justwatch.com/us/search?q='], ['Netflix', 'https://www.netflix.com/search?q='], ['Prime Video', 'https://www.primevideo.com/search?phrase='], ['Disney+', 'https://www.disneyplus.com/search?q='], ['Apple TV', 'https://tv.apple.com/search?term='], ['Hulu', 'https://www.hulu.com/search?q='], ['Max', 'https://play.max.com/search?q='], ['YouTube', 'https://www.youtube.com/results?search_query=']];
+const youtubeId = (q) => q.match(/(?:youtu\.be\/|[?&]v=|\/shorts\/|\/embed\/)([\w-]{11})/)?.[1];
+const spotifyItem = (q) => q.match(/open\.spotify\.com\/(?:intl-[a-z]+\/)?(track|album|playlist|episode|show|artist)\/(\w+)/);
+
 const WEATHER = { 0: 'clear sky', 1: 'mostly clear', 2: 'partly cloudy', 3: 'overcast', 45: 'fog', 48: 'freezing fog', 51: 'light drizzle', 53: 'drizzle', 55: 'heavy drizzle', 61: 'light rain', 63: 'rain', 65: 'heavy rain', 71: 'light snow', 73: 'snow', 75: 'heavy snow', 80: 'rain showers', 81: 'rain showers', 82: 'violent showers', 95: 'thunderstorm', 96: 'thunderstorm with hail', 99: 'severe thunderstorm' };
 
 // c: category, tool: AVIN may call it during a chat, ask: placeholder (no ask means no input needed).
@@ -219,10 +225,41 @@ const PLUGINS = {
     const a = (await get(`https://kitsu.io/api/edge/anime?filter[text]=${E(q)}&page[limit]=1`, 'json', { Accept: 'application/vnd.api+json' })).data[0]?.attributes || notFound(q);
     return { title: a.canonicalTitle, text: `Average rating: ${a.averageRating ?? 'n/a'}\nEpisodes: ${a.episodeCount ?? 'n/a'}\n${a.synopsis || ''}`, image: a.posterImage?.medium };
   } },
-  music: { n: 'Music Search', i: '🎵', c: 'Entertainment', d: 'Songs and artists', ask: 'Song or artist', async run(q) {
+  youtube: { n: 'YouTube', i: '▶️', c: 'Music & Video', d: 'Search YouTube, or paste a video link to watch here', ask: 'Search or paste a link', tool: true, async run(q) {
+    const id = youtubeId(q);
+    if (id) return { title: 'YouTube player', text: 'Playing from YouTube.', embed: `https://www.youtube-nocookie.com/embed/${id}`, link: `https://www.youtube.com/watch?v=${id}` };
+    return { title: q, text: 'Open these results on YouTube.', links: links(q, [['Search YouTube', 'https://www.youtube.com/results?search_query='], ['YouTube Music', 'https://music.youtube.com/search?q=']]) };
+  } },
+  spotify: { n: 'Spotify', i: '🟢', c: 'Music & Video', d: 'Search Spotify, or paste a link to play here', ask: 'Search or paste a link', tool: true, async run(q) {
+    const m = spotifyItem(q);
+    if (m) return { title: 'Spotify player', text: 'Playing from Spotify.', embed: `https://open.spotify.com/embed/${m[1]}/${m[2]}`, link: `https://open.spotify.com/${m[1]}/${m[2]}` };
+    return { title: q, text: 'Open these results on Spotify.', links: links(q, [['Search Spotify', 'https://open.spotify.com/search/']]) };
+  } },
+  music: { n: 'Music Finder', i: '🎵', c: 'Music & Video', d: 'Find songs, hear a 30-second preview, open in your app', ask: 'Song or artist', tool: true, async run(q) {
     const d = await get(`https://itunes.apple.com/search?term=${E(q)}&entity=song&limit=5`);
     if (!d.results.length) notFound(q);
-    return { title: `Music: ${q}`, text: d.results.map((r) => `${r.trackName}, ${r.artistName} (${r.collectionName})`).join('\n'), image: d.results[0].artworkUrl100, link: d.results[0].trackViewUrl };
+    const top = d.results[0];
+    return { title: `${top.trackName}, ${top.artistName}`, text: d.results.map((r) => `${r.trackName}, ${r.artistName} (${r.collectionName})`).join('\n'), image: top.artworkUrl100?.replace('100x100', '300x300'), audio: top.previewUrl, links: links(`${top.trackName} ${top.artistName}`, MUSIC_APPS) };
+  } },
+  musichub: { n: 'Music Apps', i: '🎧', c: 'Music & Video', d: 'Search Spotify, Apple Music, JioSaavn, Gaana and more at once', ask: 'Song, artist or album', async run(q) {
+    return { title: q, text: 'Pick where you want to listen.', links: links(q, MUSIC_APPS) };
+  } },
+  watch: { n: 'Where to Watch', i: '🍿', c: 'Music & Video', d: 'Find a show or movie across streaming apps', ask: 'Show or movie', tool: true, async run(q) {
+    const s = (await get(`https://api.tvmaze.com/search/shows?q=${E(q)}`).catch(() => []))[0]?.show;
+    const home = s?.webChannel?.name || s?.network?.name;
+    return { title: s?.name || q, text: s ? `Original home: ${home || 'not listed'}\nStatus: ${s.status}\nAvailability differs by country, so check JustWatch for yours.` : 'Pick a service to search. Availability differs by country.', image: s?.image?.medium, links: links(s?.name || q, WATCH_APPS) };
+  } },
+  movies: { n: 'Movie Finder', i: '🎬', c: 'Music & Video', d: 'Plots, genres and trailers for films', ask: 'Movie name', tool: true, async run(q) {
+    const m = (await get(`https://itunes.apple.com/search?term=${E(q)}&entity=movie&limit=1`)).results?.[0] || notFound(q);
+    return { title: `${m.trackName} (${String(m.releaseDate || '').slice(0, 4)})`, text: `${m.primaryGenreName} ${m.contentAdvisoryRating ? `, ${m.contentAdvisoryRating}` : ''}\nDirected by ${m.artistName}\n\n${m.longDescription || ''}`, image: m.artworkUrl100?.replace('100x100', '300x300'), video: m.previewUrl, links: links(m.trackName, WATCH_APPS) };
+  } },
+  podcasts: { n: 'Podcasts', i: '🎙️', c: 'Music & Video', d: 'Find podcasts on any topic', ask: 'Topic or show', async run(q) {
+    const d = await get(`https://itunes.apple.com/search?term=${E(q)}&entity=podcast&limit=5`);
+    if (!d.results.length) notFound(q);
+    return { title: `Podcasts: ${q}`, text: d.results.map((r) => `${r.collectionName}, ${r.artistName}`).join('\n'), image: d.results[0].artworkUrl100, link: d.results[0].collectionViewUrl, links: links(d.results[0].collectionName, [['Spotify', 'https://open.spotify.com/search/'], ['YouTube', 'https://www.youtube.com/results?search_query=']]) };
+  } },
+  livestreams: { n: 'Live & Clips', i: '📡', c: 'Music & Video', d: 'Search Twitch, Vimeo and Dailymotion', ask: 'Search', async run(q) {
+    return { title: q, text: 'Pick where to look.', links: links(q, [['Twitch', 'https://www.twitch.tv/search?term='], ['Vimeo', 'https://vimeo.com/search?q='], ['Dailymotion', 'https://www.dailymotion.com/search/']]) };
   } },
   rickmorty: { n: 'Rick & Morty', i: '🛸', c: 'Entertainment', d: 'Character lookup', ask: 'Character', async run(q) {
     const c = (await get(`https://rickandmortyapi.com/api/character/?name=${E(q)}`)).results[0];
@@ -281,7 +318,7 @@ async function runPlugin(id, query) {
   const q = String(query || '').trim().slice(0, 500);
   if (p.ask && !p.optional && !q) throw new Error(`Please enter: ${p.ask}`);
   const out = await p.run(q);
-  return { plugin: p.n, icon: p.i, title: clean(out.title).slice(0, 160), text: limit(out.text), image: out.image, link: out.link };
+  return { plugin: p.n, icon: p.i, title: clean(out.title).slice(0, 160), text: limit(out.text), image: out.image, link: out.link, links: out.links, audio: out.audio, video: out.video, embed: out.embed };
 }
 
 const toolDefs = (enabled) => Object.entries(PLUGINS)
