@@ -176,6 +176,27 @@ function splitChips(text) {
   return { reply: text.slice(0, match.index).trim(), chips };
 }
 
+// Tool schemas are costly, so only offer the ones a message plausibly needs.
+const TOOL_HINTS = {
+  weather: /weather|forecast|temperature|raining|\bsnow/i,
+  air: /air quality|\baqi\b|pollution|smog/i,
+  time: /what time|time in|time there|local time/i,
+  quakes: /earthquake/i,
+  wikipedia: /wikipedia|who (is|was)|what (is|was) the history|history of/i,
+  define: /\bdefine\b|definition|meaning of|what does .* mean/i,
+  translate: /translate|translation/i,
+  country: /capital of|population of|about the country/i,
+  holidays: /holiday/i,
+  currency: /convert|exchange rate|currency|\b\d+\s?(usd|eur|gbp|pkr|inr|aed|sar)\b/i,
+  crypto: /bitcoin|ethereum|crypto|dogecoin|solana/i,
+  hackernews: /tech news|headlines|latest news/i,
+  youtube: /youtube|youtu\.be/i,
+  spotify: /spotify/i,
+  music: /\bsong|music|\btrack\b|\balbum|listen to|\bplay\b/i,
+  watch: /where (can|do|to) .*(watch|stream|see)|\bwatch\b|streaming|netflix|prime video|disney|hulu|\bott\b/i,
+  movies: /\bmovie|\bfilm\b/i,
+};
+
 async function callProvider(provider) {
   let upstream;
   try {
@@ -204,17 +225,19 @@ async function callProvider(provider) {
 }
 
 // Lets the model call live plugins. Any failure returns null so the normal reply path still runs.
-async function runWithTools(provider, enabled) {
-  const tools = toolDefs(enabled);
+async function runWithTools(provider, enabled, message) {
+  const tools = toolDefs(enabled).filter((t) => TOOL_HINTS[t.function.name]?.test(message));
   if (!tools.length) return null;
+  let lastStatus = 0;
   const send = async (body) => {
     const r = await fetch(provider.url, { method: 'POST', headers: provider.headers, body: JSON.stringify(body), signal: AbortSignal.timeout(TIMEOUT_MS) });
+    lastStatus = r.status;
     return r.ok ? r.json() : null;
   };
   try {
     const ask = { ...provider.body, tools, tool_choice: 'auto' };
     // The model occasionally writes a malformed tool call, which Groq rejects, so allow one retry.
-    const first = (await send(ask)) || (await send(ask));
+    const first = (await send(ask)) || (lastStatus === 400 ? await send(ask) : null);
     const message = first?.choices?.[0]?.message;
     if (!message) return null;
     const calls = (message.tool_calls || []).slice(0, 3);
@@ -293,7 +316,7 @@ module.exports = async function handler(req, res) {
   }
 
   const canUseTools = groqKey && !isTask && !image;
-  const live = canUseTools ? await runWithTools(provider, body.plugins) : null;
+  const live = canUseTools ? await runWithTools(provider, body.plugins, message) : null;
   let text = live?.text || '';
 
   if (!text) {
