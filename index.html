@@ -109,16 +109,16 @@ body.chatting .brand{display:flex}
 .footer{flex:none;font-size:10.5px;letter-spacing:.08em;margin:8px 0 0;opacity:.6}
 :focus-visible{outline:2px solid #bff3e6;outline-offset:2px}.composer input:focus-visible{outline:0}
 @media(max-width:650px){
-.app{grid-template-columns:minmax(0,1fr);grid-template-rows:minmax(0,1fr) auto;padding:10px 12px calc(8px + env(safe-area-inset-bottom));gap:8px}
-.sidebar{order:2;width:100%;align-self:stretch;border-radius:20px;padding:4px}
-.nav{flex-direction:row;justify-content:space-between}.nav button{flex:1;padding:6px 0 5px}.nav button span{width:20px;height:20px;margin-bottom:2px}
-.tiles{grid-template-columns:repeat(2,minmax(0,1fr))}.tile{flex-direction:row;align-items:center;padding:9px 10px}.tile-icon{display:block;flex:none}.tile small{display:none}
+.app{grid-template-columns:54px minmax(0,1fr);padding:10px 10px calc(10px + env(safe-area-inset-bottom)) 8px;gap:8px}
+.sidebar{align-self:center;border-radius:20px;padding:5px 3px}
+.nav{gap:3px}.nav button{font-size:9.5px;letter-spacing:0;padding:9px 0 7px;border-radius:14px}.nav button span{width:20px;height:20px;margin-bottom:3px}
+.tiles{grid-template-columns:repeat(2,minmax(0,1fr))}.tile{flex-direction:row;align-items:center;gap:6px;padding:9px 8px}.tile-icon{display:block;flex:none}.tile small{display:none}
 .composer{gap:4px;padding:4px 4px 4px 11px}.composer input{font-size:16px;padding:9px 3px}.send{width:40px;height:40px;font-size:0}.star{font-size:17px}
-.message{max-width:88%}.footer{display:none}
+.message{max-width:92%}.bot{margin-left:32px}.bot:before{left:-32px;width:26px;height:26px}.footer{display:none}
 .welcome{padding:9px 12px}.tagline{letter-spacing:.24em;font-size:9px}.logo-wrap .swan-img{width:79%;height:79%}
 .logo-wrap{width:clamp(88px,17vh,136px);height:clamp(88px,17vh,136px)}
 }
-@media(max-width:390px){.nav button{font-size:9.5px}.tile{padding:8px}.tile-icon{display:block}}
+@media(max-width:390px){.tile b{font-size:12.5px}.tile-icon{display:block;width:26px;height:26px;padding:5px}}
 @media(prefers-reduced-motion:reduce){*,:before,:after{animation:none!important;transition:none!important}}
 </style>
 </head>
