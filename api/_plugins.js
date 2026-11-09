@@ -249,9 +249,16 @@ const PLUGINS = {
     const home = s?.webChannel?.name || s?.network?.name;
     return { title: s?.name || q, text: s ? `Original home: ${home || 'not listed'}\nStatus: ${s.status}\nAvailability differs by country, so check JustWatch for yours.` : 'Pick a service to search. Availability differs by country.', image: s?.image?.medium, links: links(s?.name || q, WATCH_APPS) };
   } },
-  movies: { n: 'Movie Finder', i: '🎬', c: 'Music & Video', d: 'Plots, genres and trailers for films', ask: 'Movie name', tool: true, async run(q) {
-    const m = (await get(`https://itunes.apple.com/search?term=${E(q)}&media=movie&entity=movie&limit=1`)).results?.[0] || notFound(q);
-    return { title: `${m.trackName} (${String(m.releaseDate || '').slice(0, 4)})`, text: `${m.primaryGenreName} ${m.contentAdvisoryRating ? `, ${m.contentAdvisoryRating}` : ''}\nDirected by ${m.artistName}\n\n${m.longDescription || ''}`, image: m.artworkUrl100?.replace('100x100', '300x300'), video: m.previewUrl, links: links(m.trackName, WATCH_APPS) };
+  movies: { n: 'Movie Finder', i: '🎬', c: 'Music & Video', d: 'Film summaries, trailers and where to stream', ask: 'Movie name', tool: true, async run(q) {
+    const hits = (await get(`https://en.wikipedia.org/w/api.php?action=query&list=search&srsearch=${E(q + ' film')}&srlimit=5&format=json`)).query.search;
+    let film = null;
+    for (const hit of hits) {
+      const page = await get(`https://en.wikipedia.org/api/rest_v1/page/summary/${E(hit.title)}`).catch(() => null);
+      if (/\bfilm\b/i.test(page?.description || '')) { film = page; break; }
+    }
+    if (!film) notFound(q);
+    const name = film.title.replace(/ \(.*\)$/, '');
+    return { title: `${name}: ${film.description}`, text: film.extract, image: film.thumbnail?.source, link: film.content_urls?.desktop?.page, links: links(name, [...WATCH_APPS, ['Trailer', 'https://www.youtube.com/results?search_query=trailer%20']]) };
   } },
   podcasts: { n: 'Podcasts', i: '🎙️', c: 'Music & Video', d: 'Find podcasts on any topic', ask: 'Topic or show', async run(q) {
     const d = await get(`https://itunes.apple.com/search?term=${E(q)}&entity=podcast&limit=5`);
