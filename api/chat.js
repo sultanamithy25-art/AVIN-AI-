@@ -212,7 +212,9 @@ async function runWithTools(provider, enabled) {
     return r.ok ? r.json() : null;
   };
   try {
-    const first = await send({ ...provider.body, tools, tool_choice: 'auto' });
+    const ask = { ...provider.body, tools, tool_choice: 'auto' };
+    // The model occasionally writes a malformed tool call, which Groq rejects, so allow one retry.
+    const first = (await send(ask)) || (await send(ask));
     const message = first?.choices?.[0]?.message;
     if (!message) return null;
     const calls = (message.tool_calls || []).slice(0, 3);
@@ -295,6 +297,7 @@ module.exports = async function handler(req, res) {
   let text = live?.text || '';
 
   if (!text) {
+    if (canUseTools) provider.body.messages[0].content += '\n\nNo tools are available for this reply. Answer directly in plain text and do not attempt any tool call.';
     const outcome = await callProvider(provider);
     if (outcome.error) return sendError(res, ...outcome.error);
     text = outcome.text;
