@@ -58,7 +58,7 @@ const PERSONAS = {
   },
 };
 
-const CHIPS_PROMPT = `After your reply, add one final line in exactly this form: <<first|second|third>>
+const CHIPS_PROMPT = `After your reply, add one final line in exactly this form, with your own suggestions replacing the words in capitals: <<SUGGESTION ONE|SUGGESTION TWO|SUGGESTION THREE>>
 These are three short things the user might tap to say next, written in the user's voice, under 6 words each, matching the current mode.`;
 
 const DRAW_PROMPT = `You are a skilled vector illustrator. Create one striking, detailed SVG illustration of what the user asks for.
@@ -172,7 +172,7 @@ function geminiRequest(apiKey, turns, system) {
 function splitChips(text) {
   const match = text.match(/\n?\s*<<\s*([^<>]*?)\s*>>\s*$/);
   if (!match) return { reply: text.replace(/<<[^<>]*>>/g, '').trim(), chips: [] };
-  const chips = match[1].split('|').map((c) => c.trim()).filter(Boolean).slice(0, 3);
+  const chips = match[1].split('|').map((c) => c.trim()).filter((c) => c && !/^(first|second|third)$/i.test(c)).slice(0, 3);
   return { reply: text.slice(0, match.index).trim(), chips };
 }
 
