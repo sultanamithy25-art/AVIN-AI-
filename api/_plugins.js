@@ -250,7 +250,7 @@ const PLUGINS = {
     return { title: s?.name || q, text: s ? `Original home: ${home || 'not listed'}\nStatus: ${s.status}\nAvailability differs by country, so check JustWatch for yours.` : 'Pick a service to search. Availability differs by country.', image: s?.image?.medium, links: links(s?.name || q, WATCH_APPS) };
   } },
   movies: { n: 'Movie Finder', i: '🎬', c: 'Music & Video', d: 'Plots, genres and trailers for films', ask: 'Movie name', tool: true, async run(q) {
-    const m = (await get(`https://itunes.apple.com/search?term=${E(q)}&entity=movie&limit=1`)).results?.[0] || notFound(q);
+    const m = (await get(`https://itunes.apple.com/search?term=${E(q)}&media=movie&entity=movie&limit=1`)).results?.[0] || notFound(q);
     return { title: `${m.trackName} (${String(m.releaseDate || '').slice(0, 4)})`, text: `${m.primaryGenreName} ${m.contentAdvisoryRating ? `, ${m.contentAdvisoryRating}` : ''}\nDirected by ${m.artistName}\n\n${m.longDescription || ''}`, image: m.artworkUrl100?.replace('100x100', '300x300'), video: m.previewUrl, links: links(m.trackName, WATCH_APPS) };
   } },
   podcasts: { n: 'Podcasts', i: '🎙️', c: 'Music & Video', d: 'Find podcasts on any topic', ask: 'Topic or show', async run(q) {
