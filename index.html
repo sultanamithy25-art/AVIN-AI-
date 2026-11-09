@@ -4,6 +4,7 @@
 <meta charset="UTF-8" />
 <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover" />
 <meta name="theme-color" content="#050914" />
+<meta name="color-scheme" content="only dark" />
 <link rel="preconnect" href="https://fonts.googleapis.com"><link rel="preconnect" href="https://fonts.gstatic.com" crossorigin><link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:wght@400;500&family=Inter:wght@400;500&display=swap" rel="stylesheet">
 <link rel="manifest" href="/manifest.json"><link rel="apple-touch-icon" href="/icon-180.png"><meta name="apple-mobile-web-app-capable" content="yes"><meta name="apple-mobile-web-app-status-bar-style" content="black-translucent"><meta name="apple-mobile-web-app-title" content="AVIN">
 <title>AVIN — Your Personal AI Assistant</title>
@@ -368,6 +369,14 @@ span.sc{cursor:default}button.sc.ok:hover{transform:translateY(-4px)}.sc small{p
 
 /* Sync */
 .sync-code{margin:8px 0;padding:11px;border:1px dashed rgba(236,220,184,.45);border-radius:12px;background:rgba(3,12,16,.6);font:500 13px ui-monospace,Consolas,monospace;text-align:center;letter-spacing:.04em;overflow-wrap:anywhere}
+
+/* Keep the dark design and true image colors */
+:root{color-scheme:only dark}
+html,body{background-color:#050914}
+html[data-theme=rose] .art,html[data-theme=rose] .gallery img,html[data-theme=rose] .plugin-card img,html[data-theme=rose] .plugin-card video,html[data-theme=rose] .player{filter:hue-rotate(-155deg)}
+html[data-theme=violet] .art,html[data-theme=violet] .gallery img,html[data-theme=violet] .plugin-card img,html[data-theme=violet] .plugin-card video,html[data-theme=violet] .player{filter:hue-rotate(-75deg)}
+html[data-theme=ember] .art,html[data-theme=ember] .gallery img,html[data-theme=ember] .plugin-card img,html[data-theme=ember] .plugin-card video,html[data-theme=ember] .player{filter:hue-rotate(-205deg)}
+html[data-theme=forest] .art,html[data-theme=forest] .gallery img,html[data-theme=forest] .plugin-card img,html[data-theme=forest] .plugin-card video,html[data-theme=forest] .player{filter:hue-rotate(40deg)}
 </style>
 </head>
 <body><div class="aurora" aria-hidden="true"><i></i><i></i><i></i></div><div class="app">
