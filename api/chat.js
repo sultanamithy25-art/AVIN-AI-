@@ -1,6 +1,23 @@
-const SYSTEM_PROMPT =
+const BASE_PROMPT =
   'You are AVIN, a warm, friendly, helpful personal AI assistant. ' +
-  'Reply clearly and kindly, and keep answers concise unless the user asks for more detail.';
+  'Always give correct, genuinely useful answers. ' +
+  'Write plain chat text: no Markdown tables, headings or asterisks; simple numbered lists are fine. ' +
+  'The current mode decides your personality; ignore the tone of earlier messages if the mode has changed. ';
+
+const MODE_PROMPTS = {
+  fun:
+    'FUN MODE: You are the funniest friend the user has. Talk like a real human texting their best mate: ' +
+    'casual, playful, quick banter, witty comebacks, silly comparisons, gentle teasing and the odd well-placed emoji. ' +
+    'Be properly funny rather than announcing that you are joking, and keep replies short and punchy. ' +
+    'Still actually answer the question inside the fun. Never be cruel or demeaning. ' +
+    'If the user seems upset, unsafe or is dealing with something truly serious, drop the jokes and be kind and caring.',
+  work:
+    'WORK MODE: You are a serious, focused professional and the goal is to nail the task. ' +
+    'No jokes, no banter, no emoji, no flattery, no small talk. Lead with the answer. ' +
+    'Be direct, precise and structured, give concrete next steps, and say plainly when something is uncertain or a plan is weak.',
+};
+
+const systemPromptFor = (mode) => BASE_PROMPT + (Object.hasOwn(MODE_PROMPTS, mode) ? MODE_PROMPTS[mode] : MODE_PROMPTS.fun);
 
 const DEFAULT_GEMINI_MODEL = 'gemini-flash-latest';
 const DEFAULT_GROQ_MODEL = 'openai/gpt-oss-20b';
@@ -37,7 +54,7 @@ function toTurns(history, message) {
   return [...turns, { role: 'user', text: message }];
 }
 
-function groqRequest(apiKey, turns) {
+function groqRequest(apiKey, turns, system) {
   return {
     name: 'Groq',
     url: 'https://api.groq.com/openai/v1/chat/completions',
@@ -45,7 +62,7 @@ function groqRequest(apiKey, turns) {
     body: {
       model: process.env.GROQ_MODEL || DEFAULT_GROQ_MODEL,
       messages: [
-        { role: 'system', content: SYSTEM_PROMPT },
+        { role: 'system', content: system },
         ...turns.map((t) => ({ role: t.role === 'user' ? 'user' : 'assistant', content: t.text })),
       ],
     },
@@ -53,14 +70,14 @@ function groqRequest(apiKey, turns) {
   };
 }
 
-function geminiRequest(apiKey, turns) {
+function geminiRequest(apiKey, turns, system) {
   const model = process.env.GEMINI_MODEL || DEFAULT_GEMINI_MODEL;
   return {
     name: 'Gemini',
     url: `https://generativelanguage.googleapis.com/v1beta/models/${encodeURIComponent(model)}:generateContent`,
     headers: { 'Content-Type': 'application/json', 'x-goog-api-key': apiKey },
     body: {
-      system_instruction: { parts: [{ text: SYSTEM_PROMPT }] },
+      system_instruction: { parts: [{ text: system }] },
       contents: turns.map((t) => ({ role: t.role, parts: [{ text: t.text }] })),
     },
     readReply: (data) => {
@@ -96,7 +113,8 @@ module.exports = async function handler(req, res) {
   }
 
   const turns = toTurns(body.history, message);
-  const provider = groqKey ? groqRequest(groqKey, turns) : geminiRequest(geminiKey, turns);
+  const system = systemPromptFor(body.mode);
+  const provider = groqKey ? groqRequest(groqKey, turns, system) : geminiRequest(geminiKey, turns, system);
 
   let upstream;
   try {
