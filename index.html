@@ -359,7 +359,7 @@ const brand=el('div','brand');brand.innerHTML='<img alt=""><div class="brand-tex
 const modeBtns=[...document.querySelectorAll('.modes button')];
 const storedMode=()=>{try{return localStorage.getItem('avin-mode')}catch{return null}};
 let mode=Object.hasOwn(MODES,storedMode()||'')?storedMode():'fun';
-function greet(){const h=new Date().getHours(),g=h<5?'Still up':h<12?'Good morning':h<18?'Good afternoon':'Good evening';$('.welcome h2').textContent=g+(S.name?', '+S.name:'')+' ♡';$('.welcome p').textContent=MODES[mode].sub}
+function greet(){$('.welcome h2').textContent='Your thoughts, my priority ♡';$('.welcome p').textContent=(S.name?'Hi '+S.name+'. ':'')+MODES[mode].sub}
 function setMode(m,announce){mode=m;document.body.classList.toggle('mode-work',m==='work');modeBtns.forEach(b=>b.setAttribute('aria-pressed',b.dataset.m===m));brand.querySelector('small').textContent=MODES[m].status;input.placeholder=MODES[m].hint;greet();drawBrief();try{localStorage.setItem('avin-mode',m)}catch{}
   if(announce){tone(m==='fun'?880:330,120);if(cur().msgs.length){const t=m==='work'?'Work mode. Let’s nail it.':'Fun mode. Oh, this is about to get silly.';cur().msgs.push({r:'n',t});save();drawMsg({r:'n',t});toEnd()}}}
 modeBtns.forEach(b=>b.addEventListener('click',()=>{if(b.dataset.m!==mode)setMode(b.dataset.m,true)}));
