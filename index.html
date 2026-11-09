@@ -270,7 +270,7 @@ function drawMsg(m,isLast){let n;
   if(m.r==='n'){n=el('div','mode-note',m.t);log.appendChild(n);return n}
   if(m.r==='u'){n=el('div','message user',m.t);log.appendChild(n);return n}
   n=el('div','message bot');
-  if(m.r==='art'){const i=el('img','art');i.alt=m.t;i.dataset.svg='1';i.src='data:image/svg+xml;charset=utf-8,'+encodeURIComponent(m.svg);n.appendChild(i);actions(m,n);log.appendChild(n);return n}
+  if(m.r==='art'){const i=el('img','art');i.alt=m.t;i.dataset.svg='1';i.onload=toEnd;i.src='data:image/svg+xml;charset=utf-8,'+encodeURIComponent(m.svg);n.appendChild(i);actions(m,n);log.appendChild(n);return n}
   const b=el('div','msg-body');b.innerHTML=render(m.t);n.appendChild(b);actions(m,n,isLast);log.appendChild(n);return n}
 function showChat(){log.innerHTML='';const msgs=cur().msgs;let last=-1;msgs.forEach((m,i)=>{if(m.r==='b')last=i});msgs.forEach((m,i)=>drawMsg(m,i===last));if(msgs[msgs.length-1]?.r==='b')drawChips(msgs[msgs.length-1].chips);toEnd()}
 function newChat(){if(cur().msgs.length){S.cur=null;cur();save()}log.innerHTML='';speechSynthesis?.cancel?.();input.focus()}
