@@ -88,10 +88,10 @@ const HEAVY = /\b(stress(ed|ful)?|anxious|anxiety|panic(king)?|overwhelm(ed|ing)
 const BUILD_BASE = `You are an expert front-end developer and visual designer.
 Output exactly one complete, self-contained HTML document that starts with <!DOCTYPE html> and ends with </html>, with no explanation and no code fences.
 Put all CSS and JavaScript inline. Do not load external scripts, stylesheets, fonts or images, make no network requests, and include no forms that send data anywhere. Use inline SVG, CSS gradients and emoji for visuals.
-Make it polished, responsive on phones and desktops, and accessible, with realistic placeholder content the user can replace.`;
+Make it polished, responsive on phones and desktops, and accessible, with realistic placeholder content the user can replace. Before answering, check the code for errors and make sure everything shown on screen works.`;
 const BUILD_KINDS = {
   website: 'Build the website or page the user describes, with a strong visual identity, clear sections and smooth details.',
-  game: 'Build a complete, fun, original browser game from the user\'s idea, playable with touch and keyboard, with a start screen, score, game over and restart. Do not copy existing commercial games, their names, characters or art.',
+  game: 'Build a complete, fun, original browser game from the user\'s idea, playable with touch and keyboard, with a start screen, score, game over and restart. Use one state variable (start, playing, over) and show exactly one of those screens at a time by toggling a hidden class; the game must never reach game over before the player presses start, and restart must fully reset the state. Keep the code simple and robust, with no errors. Do not copy existing commercial games, their names, characters or art.',
   template: 'Build the ready-to-use template the user asks for. Make the text editable with contenteditable, and include a clean print style so it can be printed or saved as PDF.',
   app: 'Build a small, useful single-page web app tool from the user\'s idea. Save any user data only in localStorage.',
 };
