@@ -1304,10 +1304,20 @@ function makeGameChat(title){gGame=title;gChatLog=[];gameCtx=()=>'Game: '+title+
 var FEMALE=/female|woman|zira|samantha|karen|moira|tessa|veena|fiona|victoria|susan|hazel|heera|kalpana|swara|aditi|raveena|salli|joanna|kendra|ivy|amy|emma|olivia|aria|jenny|libby|sonia|natasha|hoda|zariyah|salma|nabila|lekha|uzma|gul|sara|laila|paulina|monica|helena|amelie|anna|alice|ellen|yuna|kyoko|mei-?jia|ting-?ting|sin-?ji|x-sfg|x-tpf|x-iog|x-cfn|x-sfc|x-tpc/i,MALE=/\bmale\b|david|mark|guy|george|daniel|ravi|hemant|alex|fred|thomas|jorge|diego|asad|x-iom|x-iol|x-tpd|x-gba/i;
 function voiceFor(lang){const vs=speechSynthesis.getVoices(),base=lang.split('-')[0].toLowerCase();const mine=vs.find(v=>v.name===S.voiceName);if(mine&&mine.lang.toLowerCase().startsWith(base))return mine;const exact=vs.filter(v=>v.lang.toLowerCase().replace('_','-')===lang.toLowerCase()),near=vs.filter(v=>v.lang.toLowerCase().startsWith(base));const pool=exact.length?exact:near;if(!pool.length)return null;return pool.find(v=>FEMALE.test(v.name))||pool.find(v=>!MALE.test(v.name))||pool[0]}
 function voicePitch(v){return v&&FEMALE.test(v.name)?1.05:1.18}
-function sentences(t){return String(t).replace(/\s+/g,' ').match(/[^.!?।؟。！？]+[.!?।؟。！？]*\s*/g)||[t]}
-/* Speak in small sentence chunks, slowly enough to follow, and only with a voice for that language. */
-function speakSeq(text,o){if(!('speechSynthesis'in window)){toast('Reading aloud isn’t supported on this browser');return false}const lang=o.lang||speechLang(text),v=voiceFor(lang);speechSynthesis.cancel();if(!v&&!/^en/i.test(lang)){toast('No '+langName(o.code||detectLang(text)||lang)+' voice on this phone yet. Add it in your text-to-speech settings.');o.onend&&o.onend();return false}
-  const parts=sentences(text).map(s=>s.trim()).filter(Boolean);parts.forEach((s,i)=>{const u=new SpeechSynthesisUtterance(s);u.lang=lang;if(v)u.voice=v;u.rate=o.rate||.95;u.pitch=voicePitch(v);if(i===parts.length-1&&o.onend)u.onend=o.onend;speechSynthesis.speak(u)});return true}
+/* Human-like reading with free device voices: clean text, phrase-by-phrase pauses, calm per-language pace */
+function cleanForSpeech(t,lang){let s=String(t).replace(/```[\s\S]*?```/g,' ').replace(/https?:\/\/\S+/g,' link ').replace(/[*_#`>~|]+/g,' ').replace(/[\p{Extended_Pictographic}️‍]/gu,' ').replace(/\[(.*?)\]\(.*?\)/g,'$1');
+  if(/^en/i.test(lang))s=s.replace(/&/g,' and ').replace(/\be\.g\./gi,'for example').replace(/\bi\.e\./gi,'that is').replace(/\betc\./gi,'and so on').replace(/(\d)\s*%/g,'$1 percent').replace(/\bvs\.?\b/gi,'versus');
+  return s.replace(/\s*[—–]\s*/g,', ').replace(/\.{3,}|…/g,'… ').replace(/\s*\(\s*/g,', ').replace(/\s*\)\s*/g,', ').replace(/\s*\/\s*/g,' or ').replace(/\s*,\s*(,\s*)+/g,', ').replace(/\s+/g,' ').trim()}
+// Split into speakable phrases and how long to rest after each, like a person breathing between thoughts.
+function phrases(t){const out=[];const sents=t.match(/[^.!?।؟。！？\n]+[.!?।؟。！？]*|\n+/g)||[t];sents.forEach(s=>{s=s.trim();if(!s)return;const end=/[?؟？]$/.test(s)?520:/[!！]$/.test(s)?480:420;const parts=s.length>90?s.split(/(?<=[,،;:、，])\s+/):[s];parts.forEach((p,i)=>{p=p.trim();if(p)out.push({t:p,pause:i===parts.length-1?end:220})})});return out}
+const PACE={en:.94,ur:.86,hi:.86,bn:.86,pa:.86,ar:.86,fa:.86,tr:.9,es:.92,fr:.92,de:.92,it:.92,pt:.92,ru:.9,zh:.88,ja:.9,ko:.9,id:.92};
+var speakToken=0;
+function speakSeq(text,o){if(!('speechSynthesis'in window)){toast('Reading aloud isn’t supported on this browser');return false}const lang=o.lang||speechLang(text),v=voiceFor(lang);speechSynthesis.cancel();const my=++speakToken;
+  if(!v&&!/^en/i.test(lang)){toast('No '+langName(o.code||detectLang(text)||lang)+' voice on this phone yet. Add it in your text-to-speech settings.');o.onend&&o.onend();return false}
+  const list=phrases(cleanForSpeech(text,lang));const base=(PACE[lang.slice(0,2).toLowerCase()]||.92)*((o.rate||1)/.95);const pitch=v&&FEMALE.test(v.name)?1.02:1.08;let i=0;
+  const next=()=>{if(my!==speakToken)return;if(i>=list.length){o.onend&&o.onend();return}const p=list[i++];const u=new SpeechSynthesisUtterance(p.t);u.lang=lang;if(v)u.voice=v;u.rate=Math.max(.7,Math.min(1.1,base*(p.t.length<25?.97:1)));u.pitch=pitch;u.volume=1;let moved=false;const go=()=>{if(moved)return;moved=true;setTimeout(next,p.pause)};u.onend=go;u.onerror=go;speechSynthesis.speak(u)};
+  next();return true}
+{const realCancel=speechSynthesis&&speechSynthesis.cancel?speechSynthesis.cancel.bind(speechSynthesis):null;if(realCancel)speechSynthesis.cancel=()=>{speakToken++;realCancel()}}
 function speak(t){const text=plain(t);chime();speakSeq(text,{lang:speechLang(text),rate:{fun:.98,work:.94,game:1.02}[mode]||.96})}
 function tuneVoice(u){const lang=speechLang(u.text);u.lang=lang;const v=voiceFor(lang);if(v)u.voice=v;u.rate=.96;u.pitch=voicePitch(v)}
 function sayIn(text,code){speakSeq(plain(text),{lang:bcp(code)||speechLang(text),code,rate:.85})}

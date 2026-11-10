@@ -100,7 +100,7 @@ const BUILD_KINDS = {
 const MAX_BASE_LENGTH = 60000;
 
 const LANGS = { en: 'English', ur: 'Urdu (in Urdu script)', roman: 'Roman Urdu (Urdu written in English letters)', hi: 'Hindi', ar: 'Arabic', bn: 'Bangla (Bengali, in Bangla script)', banglish: 'Banglish (Bangla written in English letters)', pa: 'Punjabi', fa: 'Persian', tr: 'Turkish', es: 'Spanish', fr: 'French', de: 'German', it: 'Italian', pt: 'Portuguese', ru: 'Russian', zh: 'Chinese (Simplified)', ja: 'Japanese', ko: 'Korean', id: 'Indonesian' };
-const translatePrompt = (to) => `You are an expert interpreter. Translate the user's text into ${to}. Keep the meaning, tone, names and emoji, and make it sound natural to a native speaker. Output only the translation, with no notes or quotes.`;
+const translatePrompt = (to) => `You are an expert interpreter. Translate the user's text into ${to}. Keep the meaning, tone and names, and make it sound the way a native speaker would naturally say it out loud: everyday wording, short clear sentences, and commas and full stops where a person would pause for breath. Output only the translation, with no notes or quotes.`;
 
 const COMPANION_PROMPT = `PRIVATE COMPANION SPACE. The user is in their private space and wants to talk openly, without holding back. Be a warm, present, non-judgmental companion.
 - Listen closely, reflect what they feel in your own words, and ask gentle follow-up questions. Never shame, lecture or moralise, whatever they share.
