@@ -1199,7 +1199,7 @@ function playLudo(){gameShell('Ludo',body=>{body.classList.add('ludo-wrap');cons
   async function move(pi,k){busy=true;const pl=P[pi],o=P[1-pi];let s=pl.t[k];let extra=roll===6;if(s<0){pl.t[k]=0;tone(700,60);draw();gsay(pi===0?'ldRelease':'ldAvinSix')}else{for(let i=0;i<roll;i++){pl.t[k]=++s;draw();tone(500+i*30,25);await sleep(130)}
       if(s<=50){const a=abs(pl,s);if(!LSAFE.has(a))o.t.forEach((os,ok)=>{if(os>=0&&os<=50&&abs(o,os)===a){o.t[ok]=-1;extra=true;tone(220,200);gsay(pi===0?'ldCapture':'ldCaptured')}})}
       if(s===56){extra=true;gsay(pi===0?'ldHome':'ldAvinSix');tone(1000,150)}else if(pi===0&&!extra)gsay('ldMove')}
-    draw();busy=false;if(pl.t.every(x=>x===56))return finish(pi);rolled=false;if(extra){info.textContent=(pi===0?'You':'AVIN')+' rolled again!';if(pi===1)setTimeout(avinTurn,900)}else next()}
+    draw();busy=false;if(pl.t.every(x=>x===56))return finish(pi);rolled=false;if(extra){info.textContent=(pi===0?'Bonus roll! Roll again':'AVIN rolls again');if(pi===1)setTimeout(avinTurn,900);else rollBtn.disabled=false}else next()}
   function pickToken(pi,k){if(pi!==0||turn!==0||!rolled||busy||over)return;if(!canMove(P[0],k))return toast(P[0].t[k]<0?'You need a 6 to bring a piece out':'That piece can’t move that far');move(0,k)}
   function next(){turn=1-turn;rolled=false;draw();if(turn===1){info.textContent='AVIN’s turn';setTimeout(avinTurn,700)}else{info.textContent='Your turn: roll the dice';rollBtn.disabled=false}}
   async function rollDie(){rollBtn.disabled=true;for(let i=0;i<7;i++){dice.textContent='⚀⚁⚂⚃⚄⚅'[Math.floor(Math.random()*6)];await sleep(60)}roll=1+Math.floor(Math.random()*6);dice.textContent='⚀⚁⚂⚃⚄⚅'[roll-1];tone(400+roll*60,60);return roll}
