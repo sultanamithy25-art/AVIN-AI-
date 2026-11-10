@@ -532,6 +532,14 @@ select.field{appearance:auto}
 body.mode-game .divider{display:none}
 
 main{overflow-x:hidden}.top{padding:4px 6px 0 2px}.orb-btn{margin-right:2px}
+
+/* Navy theme: deep midnight blue with periwinkle glow */
+html[data-theme=navy]{--champagne:#f2c9cf}
+html[data-theme=navy] body{background:#03051a}
+html[data-theme=navy] .app,html[data-theme=navy] .sheet{filter:hue-rotate(48deg) saturate(.92)}
+html[data-theme=navy] .aurora{filter:blur(70px) hue-rotate(52deg) saturate(.75) brightness(.75)}
+html[data-theme=navy] body:before{filter:hue-rotate(40deg)}
+html[data-theme=navy] .art,html[data-theme=navy] .gallery img,html[data-theme=navy] .plugin-card img,html[data-theme=navy] .plugin-card video,html[data-theme=navy] .player{filter:hue-rotate(-48deg) saturate(1.09)}
 </style>
 </head>
 <body><div class="aurora" aria-hidden="true"><i></i><i></i><i></i></div><div class="app">
@@ -790,7 +798,7 @@ function send(t){closeSlash();const m=!attached&&t.match(/^\/(\S+)\s*([\s\S]*)$/
   if(attached&&attached.image){const a=attached,ask=t||'What do you see in this photo?';clearAttach();return reply(ask,{display:ask,image:a.image})}if(attached){const a=attached,ask=t||'Please read this file and give me the key points.';clearAttach();return reply(ask+'\n\n[File: '+a.name+']\n'+a.text,{display:ask+'\n📎 '+a.name})}reply(t)}
 
 /* Color themes */
-const THEMES=[['','#3f9c94'],['violet','#8a6fe0'],['rose','#df7fa8'],['ember','#e0935f'],['forest','#6fb46a']];
+const THEMES=[['','#3f9c94'],['navy','#2b3f9e'],['violet','#8a6fe0'],['rose','#df7fa8'],['ember','#e0935f'],['forest','#6fb46a']];
 const applyTheme=()=>{if(S.theme)document.documentElement.dataset.theme=S.theme;else delete document.documentElement.dataset.theme};applyTheme();
 function themePicker(s){s.appendChild(el('h4','','Aurora color'));const w=el('div','swatches');THEMES.forEach(([k,c])=>{const b=btn('swatch'+(S.theme===k?' on':''),'',()=>{S.theme=k;save();applyTheme();w.querySelectorAll('.swatch').forEach(x=>x.classList.remove('on'));b.classList.add('on')});b.style.background=c;b.setAttribute('aria-label',(k||'Midnight')+' theme');w.appendChild(b)});s.appendChild(w)}
 /* Levels and achievements */
