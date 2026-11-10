@@ -496,6 +496,40 @@ select.field{appearance:auto}
 .typing-dots{min-width:44px;min-height:26px}.typing-dots:after{content:'';display:inline-block;width:26px;height:8px;background:radial-gradient(circle,#fff 2.5px,transparent 3px) 0 50%/9px 8px repeat-x;animation:dots 1s steps(3) infinite}
 .gchat-row{display:flex;gap:6px;padding-bottom:calc(6px + env(safe-area-inset-bottom))}.gchat-row .field{flex:1;padding:10px 12px;border-radius:20px;font-size:15px}
 .send-mini{flex:none;width:42px;height:42px;border:0;border-radius:50%;background:linear-gradient(145deg,#c9f6ea,#8ec5ff);color:#04211f;font-size:17px;cursor:pointer}
+
+/* Star menu layout: the side rail and mode switch move into the star */
+.sidebar,.modes,#profileBtn{display:none!important}
+.app{grid-template-columns:minmax(0,1fr)!important}
+@media(max-width:650px){.app{padding-left:14px!important}}
+.top{position:relative;justify-content:flex-end;gap:8px;min-height:52px}
+.brand,body.chatting .brand{display:flex!important;margin-right:auto}
+.brand img{display:none}
+.brand-text,body.chatting .brand-text{display:flex!important}
+.brand b{font:500 23px var(--serif);letter-spacing:.16em}.brand b:after{content:' ✦';font-size:.7em;color:#b9c8ff;text-shadow:0 0 10px #8ea6ff}
+.brand small{font:italic 400 14px var(--serif);letter-spacing:.02em;color:#c5cff3}.brand small:before{display:none}
+.orb-btn{position:relative;flex:none;width:46px;height:46px;padding:11px;border-radius:50%;border:1px solid rgba(170,190,255,.45);background:radial-gradient(circle at 35% 30%,rgba(120,140,255,.35),rgba(10,16,40,.9));color:#eef2ff;cursor:pointer;box-shadow:0 0 18px rgba(130,150,255,.35),inset 0 0 12px rgba(160,180,255,.2);transition:transform .3s,box-shadow .3s}
+.orb-btn svg{display:block;width:100%;height:100%;filter:drop-shadow(0 0 6px #dfe6ff)}
+.orb-btn:after{content:'';position:absolute;inset:-5px;border-radius:50%;border:1px solid rgba(170,190,255,.25);animation:orbpulse 3s ease-in-out infinite}
+@keyframes orbpulse{50%{transform:scale(1.12);opacity:0}}
+.orb-btn.open{transform:rotate(72deg);box-shadow:0 0 28px rgba(150,170,255,.65)}
+.orb-menu{position:absolute;top:58px;right:0;z-index:20;display:grid;grid-template-columns:repeat(3,92px);gap:9px;padding:14px;border:1px solid rgba(160,180,255,.4);border-radius:24px;background:linear-gradient(160deg,rgba(22,30,70,.94),rgba(6,10,28,.97));box-shadow:0 18px 50px rgba(0,0,0,.6),0 0 30px rgba(110,130,255,.25),inset 0 0 22px rgba(140,160,255,.08);backdrop-filter:blur(18px);-webkit-backdrop-filter:blur(18px);transform-origin:calc(100% - 22px) -8px;opacity:0;transform:scale(.6) translateY(-10px);transition:opacity .18s,transform .22s cubic-bezier(.2,1.3,.4,1)}
+.orb-menu.show{opacity:1;transform:none}
+.orb-menu:before,.orb-menu:after{content:'✦';position:absolute;color:#dfe6ff;text-shadow:0 0 10px #9fb2ff;font-size:16px}.orb-menu:before{top:-11px;right:16px}.orb-menu:after{bottom:-10px;left:50%;transform:translateX(-50%)}
+.orb-item{display:flex;flex-direction:column;align-items:center;justify-content:center;gap:6px;height:76px;padding:6px 2px;border:1px solid rgba(160,180,255,.18);border-radius:16px;background:linear-gradient(160deg,rgba(40,52,110,.55),rgba(10,16,40,.75));color:#e8ecff;font:500 12.5px var(--sans);cursor:pointer;transition:transform .15s,border-color .2s,box-shadow .2s}
+.orb-item svg{width:25px;height:25px;color:#c9d4ff;filter:drop-shadow(0 0 6px rgba(160,180,255,.6))}
+.orb-item:hover{transform:translateY(-2px);border-color:rgba(190,205,255,.5)}.orb-item:active{transform:scale(.95)}
+.orb-item.on{border-color:rgba(236,220,184,.6);box-shadow:0 0 16px rgba(236,220,184,.25),inset 0 0 14px rgba(236,220,184,.12)}.orb-item.on svg{color:var(--champagne)}
+@media(max-width:360px){.orb-menu{grid-template-columns:repeat(3,84px)}}
+/* Orbit ring and sparkle dividers */
+.logo-wrap .orbit{position:absolute;left:50%;top:50%;width:150%;height:46%;border-radius:50%;border:1.5px solid rgba(150,170,255,.55);border-left-color:rgba(150,170,255,.15);border-bottom-color:rgba(150,170,255,.25);transform:translate(-50%,-50%) rotate(-22deg);box-shadow:0 0 14px rgba(120,140,255,.25);pointer-events:none;animation:orbit 14s linear infinite}
+@keyframes orbit{to{transform:translate(-50%,-50%) rotate(338deg)}}
+.logo-wrap .spark-top,.logo-wrap .spark-bot{position:absolute;left:50%;transform:translateX(-50%);color:#eef2ff;font-size:20px;text-shadow:0 0 12px #a9b9ff;pointer-events:none}.spark-top{top:-14px}.spark-bot{bottom:-14px}
+.divider{display:flex;align-items:center;justify-content:center;gap:10px;width:min(84%,420px);margin:6px auto 4px;color:#dfe6ff}
+.divider i{flex:1;height:1px;background:linear-gradient(90deg,transparent,rgba(170,190,255,.7))}.divider i:last-child{background:linear-gradient(90deg,rgba(170,190,255,.7),transparent)}
+.divider b{font-weight:400;font-size:16px;text-shadow:0 0 10px #a9b9ff}
+.welcome .divider b{font-size:22px}
+.about{text-align:center}.about img{width:86px;height:86px;object-fit:contain;filter:drop-shadow(0 0 14px #8ec5ff)}.about h4{font:500 26px var(--serif)!important;letter-spacing:.14em;text-transform:none!important;color:#fff!important;margin:6px 0 2px!important}
+body.mode-game .divider{display:none}
 </style>
 </head>
 <body><div class="aurora" aria-hidden="true"><i></i><i></i><i></i></div><div class="app">
@@ -542,7 +576,7 @@ const brand=el('div','brand');brand.innerHTML='<img alt=""><div class="brand-tex
 const modeBtns=[...document.querySelectorAll('.modes button')];
 const storedMode=()=>{try{return localStorage.getItem('avin-mode')}catch{return null}};
 let mode=Object.hasOwn(MODES,storedMode()||'')?storedMode():'fun';
-function greet(){$('.welcome h2').textContent='Your thoughts, my priority ♡';$('.welcome p').textContent=(S.name?'Hi '+S.name+'. ':'')+MODES[mode].sub}
+function greet(){$('.welcome h2').textContent='Your thoughts, my priority';$('.welcome p').textContent=(S.name?'Hi '+S.name+'. ':'')+MODES[mode].sub}
 function setMode(m,announce){mode=m;document.body.classList.toggle('mode-work',m==='work');document.body.classList.toggle('mode-game',m==='game');modeBtns.forEach(b=>b.setAttribute('aria-pressed',b.dataset.m===m));brand.querySelector('small').textContent=MODES[m].status;input.placeholder=MODES[m].hint;greet();drawBrief();drawHub();drawFeel();try{localStorage.setItem('avin-mode',m)}catch{}
   if(announce){tone(m==='fun'?880:330,120);if(cur().msgs.length){const t=m==='work'?'Work mode. Let’s nail it.':m==='game'?'Game mode. May the best swan win.':'Fun mode. Oh, this is about to get silly.';cur().msgs.push({r:'n',t});save();drawMsg({r:'n',t});toEnd()}}}
 modeBtns.forEach(b=>b.addEventListener('click',()=>{if(b.dataset.m!==mode)setMode(b.dataset.m,true)}));
@@ -1244,5 +1278,22 @@ function makeGameChat(title){gGame=title;gChatLog=[];gameCtx=()=>'Game: '+title+
     try{const r=await fetch('/api/chat',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({message:t,history:gChatLog.slice(-10),mode:'game',name:S.name,memory:S.memory,facts:S.memPause?[]:S.facts.map(x=>x.t),noLearn:true,vibe:S.vibe||'auto',lang:S.lang&&S.lang!=='auto'?S.lang:undefined,gameContext:gameCtx()})});const d=await r.json();typing.remove();const reply=d.reply||'Sorry, I lost my train of thought. Say that again? ♡';add('avin',reply);gShow(reply.length>140?reply.slice(0,137)+'…':reply,seq);if(d.reply){gChatLog.push({role:'user',text:t},{role:'model',text:d.reply});award('msg',2)}}
     catch{typing.remove();add('avin','I couldn’t reply just now. Try again in a moment ♡');gShow('Hmm, my connection blinked. Try again?',seq)}};
   return box}
+/* Mysterious star menu replaces the side rail */
+{const ic=d=>'<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">'+d+'</svg>';
+  const I={home:ic('<path d="M3 11.5 12 4l9 7.5"/><path d="M5.5 10v9.5h13V10"/><path d="M10 19.5v-5h4v5"/>'),fun:ic('<path d="M12 3l1.8 4.6L18.5 9l-4.7 1.4L12 15l-1.8-4.6L5.5 9l4.7-1.4z"/><path d="M18 15l.8 2 2 .8-2 .8-.8 2-.8-2-2-.8 2-.8z"/>'),work:ic('<rect x="3" y="7.5" width="18" height="12" rx="2.5"/><path d="M9 7.5V5.5a1.5 1.5 0 0 1 1.5-1.5h3A1.5 1.5 0 0 1 15 5.5v2M3 12.5h18"/>'),game:ic('<rect x="2.5" y="7" width="19" height="11" rx="5.5"/><path d="M7 10.5v4M5 12.5h4M15.5 11.5h.01M18 13.5h.01"/>'),chat:ic('<path d="M4 5.5h16v11H9.5L5 20v-3.5H4z"/><path d="M8.5 11h.01M12 11h.01M15.5 11h.01"/>'),history:ic('<path d="M3.5 12a8.5 8.5 0 1 0 2.6-6.1L3.5 8.3"/><path d="M3.5 4v4.3h4.3"/><path d="M12 7.5V12l3 2"/>'),studio:ic('<rect x="3.5" y="4.5" width="17" height="15" rx="2.5"/><circle cx="9" cy="10" r="1.6"/><path d="m4 17 5-4.5 3.5 3 3-2.5 4.5 4"/>'),ideas:ic('<path d="M9 17.5h6M10 21h4"/><path d="M12 3a6.5 6.5 0 0 0-3.8 11.8c.5.4.8.9.8 1.5v1.2h6v-1.2c0-.6.3-1.1.8-1.5A6.5 6.5 0 0 0 12 3z"/>'),tools:ic('<rect x="4" y="4" width="6.5" height="6.5" rx="1.5"/><rect x="13.5" y="4" width="6.5" height="6.5" rx="1.5"/><rect x="4" y="13.5" width="6.5" height="6.5" rx="1.5"/><rect x="13.5" y="13.5" width="6.5" height="6.5" rx="1.5"/>'),you:ic('<circle cx="12" cy="8.5" r="4"/><path d="M4.5 20.5c1.2-4 4-6 7.5-6s6.3 2 7.5 6"/>'),settings:ic('<circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.7 1.7 0 0 0 .3 1.8l.1.1a2 2 0 1 1-2.8 2.8l-.1-.1a1.7 1.7 0 0 0-1.8-.3 1.7 1.7 0 0 0-1 1.5V21a2 2 0 1 1-4 0v-.1a1.7 1.7 0 0 0-1.1-1.5 1.7 1.7 0 0 0-1.8.3l-.1.1a2 2 0 1 1-2.8-2.8l.1-.1a1.7 1.7 0 0 0 .3-1.8 1.7 1.7 0 0 0-1.5-1H3a2 2 0 1 1 0-4h.1a1.7 1.7 0 0 0 1.5-1.1 1.7 1.7 0 0 0-.3-1.8l-.1-.1a2 2 0 1 1 2.8-2.8l.1.1a1.7 1.7 0 0 0 1.8.3H9a1.7 1.7 0 0 0 1-1.5V3a2 2 0 1 1 4 0v.1a1.7 1.7 0 0 0 1 1.5 1.7 1.7 0 0 0 1.8-.3l.1-.1a2 2 0 1 1 2.8 2.8l-.1.1a1.7 1.7 0 0 0-.3 1.8V9a1.7 1.7 0 0 0 1.5 1H21a2 2 0 1 1 0 4h-.1a1.7 1.7 0 0 0-1.5 1z"/>'),about:ic('<circle cx="12" cy="12" r="9"/><path d="M12 11v5.5M12 7.5h.01"/>')};
+  const openSettings=()=>{youSheet();setTimeout(()=>{const t=[...document.querySelectorAll('.tab')].find(x=>x.textContent==='Settings');t&&t.click()},0)};
+  const aboutSheet=()=>openSheet('About AVIN',s=>{const w=el('div','about');const i=el('img');i.src=swan.src;i.alt='';w.append(i,el('h4','','AVIN ✦'),el('p','','Your thoughts, my priority ♡'),el('p','note-sm','A personal AI companion with Fun, Work and Game modes, a Studio, plugins, languages and a private space. Your chats stay on your device unless you turn on encrypted sync.'),el('p','note-sm','Level '+levelOf(S.xp)+' · '+(S.chats||[]).filter(c=>c.msgs.length).length+' chats · '+(S.badges||[]).length+' badges'));s.appendChild(w);s.appendChild(btn('btn','🏆 Achievements',achievementsSheet))});
+  const ITEMS=[['home','Home',()=>goHome()],['fun','Fun',()=>{setMode('fun',true);goHome()}],['work','Work',()=>{setMode('work',true);goHome()}],['game','Game',()=>{setMode('game',true);goHome()}],['chat','Chat',()=>OPEN.chat()],['history','History',historySheet],['studio','Studio',imagesSheet],['ideas','Ideas',ideasSheet],['tools','Tools',toolsSheet],['you','You',youSheet],['settings','Settings',openSettings],['about','About',aboutSheet]];
+  const orb=btn('orb-btn','',()=>toggle());orb.innerHTML='<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 2.5l2.4 6.3 6.6.4-5.1 4.2 1.7 6.5L12 16.3l-5.6 3.6 1.7-6.5L3 9.2l6.6-.4z" fill="currentColor"/></svg>';orb.setAttribute('aria-label','Open menu');orb.setAttribute('aria-expanded','false');
+  const menu=el('div','orb-menu');menu.setAttribute('role','menu');menu.hidden=true;
+  const paint=()=>{menu.innerHTML='';const chatting=document.body.classList.contains('chatting');ITEMS.forEach(([k,label,fn])=>{const b=btn('orb-item','',()=>{close();fn()});b.setAttribute('role','menuitem');b.innerHTML=I[k];b.appendChild(el('span','',label));if(k===mode||(k==='chat'&&chatting)||(k==='home'&&!chatting))b.classList.add('on');menu.appendChild(b)})};
+  function toggle(){menu.hidden?open():close()}
+  function open(){paint();menu.hidden=false;orb.classList.add('open');orb.setAttribute('aria-expanded','true');requestAnimationFrame(()=>menu.classList.add('show'));tone(980,50)}
+  function close(){if(menu.hidden)return;menu.classList.remove('show');orb.classList.remove('open');orb.setAttribute('aria-expanded','false');setTimeout(()=>{menu.hidden=true},180)}
+  document.addEventListener('click',e=>{if(!menu.hidden&&!menu.contains(e.target)&&!orb.contains(e.target))close()});addEventListener('keydown',e=>{if(e.key==='Escape')close()});
+  $('.top').append(orb,menu);
+  /* Orbit ring and sparkle dividers from the design */
+  const lw=$('.logo-wrap');lw.appendChild(el('span','orbit'));lw.appendChild(el('span','spark-top','✦'));lw.appendChild(el('span','spark-bot','✦'));
+  const dv=t=>{const d=el('div','divider');d.append(el('i'),el('b','',t),el('i'));return d};$('h1').after(dv('✦'));$('.welcome h2').after(dv('♡'))}
 setMode(mode);showChat();tick();if(S.sync)syncNow();
 </script></body></html>
