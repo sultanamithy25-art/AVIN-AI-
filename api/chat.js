@@ -83,7 +83,7 @@ title: under 7 words. hook: one vivid sentence. why: one sentence on why it coul
 const VIBES = { chill: 'Keep your energy calm, gentle and low-key.', hype: 'Bring big, enthusiastic energy.' };
 const STYLES = { short: 'The user writes briefly, so keep replies short.', long: 'The user writes in detail, so fuller replies are welcome.', emoji: 'The user uses emoji, so a few are welcome.', plain: 'The user rarely uses emoji, so avoid them.' };
 const MOODS = ['low', 'down', 'okay', 'good', 'great'];
-const HEAVY = /(stress(ed|ful)?|anxious|anxiety|panic|overwhelm(ed|ing)?|sad|depress(ed|ing)?|lonely|alone|cry(ing)?|scared|afraid|worried|heartbroken|hopeless|exhausted|burn(ed|t)? out|hate my life|bad day|rough day|can'?t cope|grief|grieving|lost my)/i;
+const HEAVY = /\b(stress(ed|ful)?|anxious|anxiety|panic(king)?|overwhelm(ed|ing)?|sad|depress(ed|ing)?|lonely|alone|cry(ing)?|scared|afraid|worried|heartbroken|hopeless|exhausted|burn(ed|t)? out|hate my life|bad day|rough day|can'?t cope|griev(e|ing)|lost my)\b/i;
 
 const BUILD_BASE = `You are an expert front-end developer and visual designer.
 Output exactly one complete, self-contained HTML document that starts with <!DOCTYPE html> and ends with </html>, with no explanation and no code fences.
