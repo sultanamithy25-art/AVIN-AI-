@@ -239,11 +239,13 @@ function geminiRequest(apiKey, turns, system) {
   };
 }
 
+const CHIP_LINE = /\n?[ \t]*<{1,2}\s*([^<>\n]*\|[^<>\n]*?)\s*>{1,2}[ \t]*$/;
+const stripChipLines = (t) => t.replace(/<{1,2}[^<>\n]*\|[^<>\n]*>{1,2}/g, '').replace(/\n{3,}/g, '\n\n').trim();
 function splitChips(text) {
-  const match = text.match(/\n?\s*<<\s*([^<>]*?)\s*>>\s*$/);
-  if (!match) return { reply: text.replace(/<<[^<>]*>>/g, '').trim(), chips: [] };
+  const match = text.match(CHIP_LINE);
+  if (!match) return { reply: stripChipLines(text), chips: [] };
   const chips = match[1].split('|').map((c) => c.trim()).filter((c) => c && !/^(first|second|third)$/i.test(c)).slice(0, 3);
-  return { reply: text.slice(0, match.index).trim(), chips };
+  return { reply: stripChipLines(text.slice(0, match.index)), chips };
 }
 
 // Tool schemas are costly, so only offer the ones a message plausibly needs.
@@ -419,7 +421,7 @@ module.exports = async function handler(req, res) {
     return sendError(res, 502, `${provider.name} returned an empty or blocked response.`, 'empty_response');
   }
 
-  if (isTranslate) return res.status(200).json({ text });
+  if (isTranslate) return res.status(200).json({ text: stripChipLines(text) });
 
   if (isScan) {
     try {
